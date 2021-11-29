@@ -84,8 +84,8 @@
         <Negative>S</Negative>
         <DeadZoneType>CutOff</DeadZoneType>
         <DeadZone>0</DeadZone>
-        <Gravity>3</Gravity>
-        <Sensitivity>3</Sensitivity>
+        <Gravity>100</Gravity>
+        <Sensitivity>100</Sensitivity>
         <Scale>1</Scale>
         <Snap>true</Snap>
         <Invert>false</Invert>
@@ -101,8 +101,8 @@
         <Negative>DownArrow</Negative>
         <DeadZoneType>CutOff</DeadZoneType>
         <DeadZone>0</DeadZone>
-        <Gravity>3</Gravity>
-        <Sensitivity>3</Sensitivity>
+        <Gravity>100</Gravity>
+        <Sensitivity>100</Sensitivity>
         <Scale>1</Scale>
         <Snap>true</Snap>
         <Invert>false</Invert>
@@ -118,8 +118,8 @@
         <Negative>JoystickButton4</Negative>
         <DeadZoneType>CutOff</DeadZoneType>
         <DeadZone>0.02</DeadZone>
-        <Gravity>3</Gravity>
-        <Sensitivity>1</Sensitivity>
+        <Gravity>100</Gravity>
+        <Sensitivity>100</Sensitivity>
         <Scale>1</Scale>
         <Snap>true</Snap>
         <Invert>false</Invert>

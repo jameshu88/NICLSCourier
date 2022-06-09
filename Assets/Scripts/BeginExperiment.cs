@@ -19,18 +19,20 @@ public class BeginExperiment : MonoBehaviour
     public UnityEngine.UI.Toggle useElememToggle;
 
     // TODO: JPB: Make these configuration variables
-    private const bool HOSPITAL_COURIER = true;
+    private const bool EFR_COURIER = true;
     private const bool NICLS_COURIER = false;
     private const bool VALUE_COURIER = false;
 
-    string experiment_name = HOSPITAL_COURIER ? "StandardCourier" :
+
+    string experiment_name = EFR_COURIER ? "EFRCourier" :
                              NICLS_COURIER ? "NiclsCourier" :
-                             "StandardCourier";
+                             VALUE_COURIER ? "ValueCourier" :
+                             "Courier";
 
     private const string scene_name = "MainGame";
 
     public const string EXP_NAME_COURIER = "Courier";
-    public const string EXP_NAME_HOSPITAL = "StandardCourier";
+    public const string EXP_NAME_EFR = "EFRCourier";
     public const string EXP_NAME_NICLS = "NiclsCourier";
 
     private void OnEnable() {
@@ -139,11 +141,19 @@ public class BeginExperiment : MonoBehaviour
             else
                 experiment_name += "ReadOnly";
         }
+        // LC: add tags 
+        if (experiment_name == EXP_NAME_EFR)
+        {
+            if (useElememToggle.isOn)
+                experiment_name += "OpenLoop";
+            else
+                experiment_name += "ReadOnly";
+        }
+
         UnityEPL.SetExperimentName(experiment_name);
 
         LockLanguage();
         // TODO: JPB: Use NextSessionNumber()
-        // LC: added in Elemem 
         DeliveryExperiment.ConfigureExperiment(useRamulatorToggle.isOn, useNiclsToggle.isOn, useElememToggle.isOn,
                                                UnityEPL.GetSessionNumber(), experiment_name);
         Debug.Log("Ram On: " + useRamulatorToggle.isOn);

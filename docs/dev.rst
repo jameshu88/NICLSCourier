@@ -26,7 +26,7 @@ Setup
 #. Download 'Unity version 2021.3.2f1 <https://unity3d.com/get-unity/download/archive>'_. The two methods to do this are:
     #. Unity Hub (recommended)
     #. Unity Installer
-#. Download the 'Textures folder <https://upenn.box.com/s/7qjifdbbavarik7mraj8a642exhr1l8m>'_ from *system_3_installers/delivery person/Town Constructor 3* in the UPenn Box
+#. Download the 'Textures folder <https://upenn.box.com/s/1s1ba0u6tf2hktigw0z7onxciduswpl1>'_ from *system_3_installers/delivery person/Town Constructor 3* in the UPenn Box
 #. Put the newly downloaded Textures folder in the *Courier/Assets/Town Constructor 3* folder of the Courier Repo
 #. Open the project in Unity
 #. Go to *Assets > Scenes* in the project pane on the bottom of unity and double click the *MainGame* file to open the map

@@ -425,7 +425,7 @@ public class MessageImageDisplayer : MonoBehaviour
             
         }
         Button btn = deliver_item_visual_dislay.GetComponent<Button>();
-        deliver_item_display_text.text = update_name;
+        deliver_item_display_text.text = LanguageSource.current_language.Equals(LanguageSource.LANGUAGE.ENGLISH) ? update_name : name;
     }
 
     public void SetEfrText(string titleText = "", string descriptiveText = "", string leftButton = null, string rightButton = null)

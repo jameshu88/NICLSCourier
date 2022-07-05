@@ -34,6 +34,7 @@ public class MessageImageDisplayer : MonoBehaviour
     public GameObject cued_recall_message;
     public GameObject cued_recall_title;
     public GameObject cued_recall_continue;
+    public GameObject cued_recall_progress_bar;
     public GameObject sliding_scale_display;
     public GameObject sliding_scale_2_display;
     public GameObject general_message_display;

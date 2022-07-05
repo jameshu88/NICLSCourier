@@ -204,6 +204,8 @@ public class DeliveryExperiment : CoroutineExperiment
     private const int ELEMEM_REP_STIM_DELAY = 1500; // ms
     private const int ELEMEM_REP_SWITCH_DELAY = 3000; // ms
 
+    private static bool isCuedRecall = false;
+
     // Stim Tags
     List<string> GenerateStimTags(int numTrials)
     {
@@ -377,6 +379,9 @@ public class DeliveryExperiment : CoroutineExperiment
             scriptedEventReporter.ReportScriptedEvent("fps value", fpsValueDict);
         }
 
+        if (isCuedRecall)
+            messageImageDisplayer.cued_recall_progress_bar.GetComponent<Slider>().value += 1f * Time.deltaTime;
+
     }
 
     void Start()
@@ -394,7 +399,7 @@ public class DeliveryExperiment : CoroutineExperiment
         }
 
         // if (DEBUG)
-        // ConfigureExperiment(false, false, true, 1, "StandardCourier");
+        // ConfigureExperiment(false, false, true, 1, "EFRCourierReadOnly");
 
         // Session check
         if (sessionNumber == -1)
@@ -1315,7 +1320,10 @@ public class DeliveryExperiment : CoroutineExperiment
                 BlackScreen();
                 if (trialNumber > 0)
                 {
-                    messageImageDisplayer.SetGeneralBigMessageText(mainText: "next day");
+                    if (NICLS_COURIER)
+                        messageImageDisplayer.SetGeneralBigMessageText(mainText: "next day");
+                    else
+                        messageImageDisplayer.SetGeneralBigMessageText(titleText: "efr reminder title", mainText: "efr reminder main");
                     yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
                 }
 
@@ -1606,7 +1614,7 @@ public class DeliveryExperiment : CoroutineExperiment
             {
                 if (useElemem)
                 {
-                    // Elemem testing code
+                    // // Elemem testing code
                     // if (elememInterface == null)
                     //     elememInterface = GameObject.Find("ElememInterface").GetComponent<ElememInterface>();
                     //     elememInterface.elememInterfaceHelper.Start();
@@ -2211,8 +2219,10 @@ public class DeliveryExperiment : CoroutineExperiment
                 Func<IEnumerator> func = () => { return messageImageDisplayer.DisplayMessageTimedKeypressBold(
                     messageImageDisplayer.cued_recall_title, waitTime, ActionButton.RejectButton, EFR_COURIER ? "title text" : "continue text", "reject button"); };
                 messageImageDisplayer.cued_recall_message.SetActive(true);
+                DoCuedRecallProgressDisplay(true);
                 yield return messageImageDisplayer.DisplayMessageFunction(store.familiarization_object, func);
                 messageImageDisplayer.cued_recall_message.SetActive(false);
+                DoCuedRecallProgressDisplay(false);
             }
         }
         else
@@ -2234,6 +2244,16 @@ public class DeliveryExperiment : CoroutineExperiment
         }
 
         yield return null;
+    }
+
+    private void DoCuedRecallProgressDisplay(bool progressOn)
+    {
+        messageImageDisplayer.cued_recall_progress_bar.SetActive(progressOn);
+        messageImageDisplayer.cued_recall_progress_bar.GetComponent<Slider>().maxValue = (int)MAX_CUED_RECALL_TIME_PER_STORE;
+        isCuedRecall = progressOn;
+
+        if (!progressOn)
+            messageImageDisplayer.cued_recall_progress_bar.GetComponent<Slider>().value = 0;
     }
 
     private IEnumerator DoTwoBtnErKeypressCheck()
@@ -2343,8 +2363,12 @@ public class DeliveryExperiment : CoroutineExperiment
         while (!InputManager.GetButton("EfrReject"))
             yield return null;
         yield return messageImageDisplayer.DoTextBoldTimedOrButton("EfrReject", toggleText, 0.5f);
+        messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "one btn er message", continueText: "");
         yield return new WaitForSeconds(1.5f);
         messageImageDisplayer.general_bigger_message_display.SetActive(false);
+
+        messageImageDisplayer.SetGeneralMessageText(mainText: "er check pass");
+        yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_message_display);
 
         scriptedEventReporter.ReportScriptedEvent("stop efr keypress check");
     }

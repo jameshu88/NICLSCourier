@@ -380,7 +380,7 @@ public class DeliveryExperiment : CoroutineExperiment
         }
 
         if (isCuedRecall)
-            messageImageDisplayer.cued_recall_progress_bar.GetComponent<Slider>().value += 1f * Time.deltaTime;
+            messageImageDisplayer.cued_recall_progress.fillAmount -= (1f / MAX_CUED_RECALL_TIME_PER_STORE) * Time.deltaTime;
 
     }
 
@@ -1614,11 +1614,11 @@ public class DeliveryExperiment : CoroutineExperiment
             {
                 if (useElemem)
                 {
-                    // // Elemem testing code
-                    // if (elememInterface == null)
-                    //     elememInterface = GameObject.Find("ElememInterface").GetComponent<ElememInterface>();
-                    //     elememInterface.elememInterfaceHelper.Start();
-                    //     elememInterface.elememInterfaceHelper.StartLoop();
+                    // Elemem testing code
+                    if (elememInterface == null)
+                        elememInterface = GameObject.Find("ElememInterface").GetComponent<ElememInterface>();
+                        elememInterface.elememInterfaceHelper.Start();
+                        elememInterface.elememInterfaceHelper.StartLoop();
                     
                     int iterations = (int)Math.Round(FREE_RECALL_LENGTH / (STIM_DURATION * 2));
                     elememInterface.DoRepeatingStim(iterations, ELEMEM_REP_SWITCH_DELAY, ELEMEM_REP_STIM_INTERVAL);
@@ -2249,11 +2249,11 @@ public class DeliveryExperiment : CoroutineExperiment
     private void DoCuedRecallProgressDisplay(bool progressOn)
     {
         messageImageDisplayer.cued_recall_progress_bar.SetActive(progressOn);
-        messageImageDisplayer.cued_recall_progress_bar.GetComponent<Slider>().maxValue = (int)MAX_CUED_RECALL_TIME_PER_STORE;
+        // messageImageDisplayer.cued_recall_progress_bar.GetComponent<Slider>().maxValue = (int)MAX_CUED_RECALL_TIME_PER_STORE;
         isCuedRecall = progressOn;
 
         if (!progressOn)
-            messageImageDisplayer.cued_recall_progress_bar.GetComponent<Slider>().value = 0;
+            messageImageDisplayer.cued_recall_progress.fillAmount = 1;
     }
 
     private IEnumerator DoTwoBtnErKeypressCheck()

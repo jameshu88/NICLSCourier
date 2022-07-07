@@ -16,7 +16,8 @@ public static class LanguageSource
 
         { "final recall", new string[] {"All items exhausted. Press any key to proceed to final recall.", "Alle Gegenstände ausgeliefert. Weiter mit beliebiger Taste."} },
         { "final no recall", new string[] {"All items exhausted. Press any key to proceed.", "Alle Gegenstände ausgeliefert. Drücken Sie eine beliebige Taste, um fortzufahren."} },
-        { "store cue recall", new string[] {"Please recall which item you delivered to the store shown on the screen.", "Bitte nennen Sie den Gegenstand, den Sie zu dem gezeigte Geschäft geliefert haben."} },
+        { "store cue recall", new string[] {"Please recall which item you delivered to the store shown on the screen." + "\n\n" + 
+                                            "If you can't remember the item, please guess an item, and press the (B) button immediately afterwards to indicate it was a guess.", "Bitte nennen Sie den Gegenstand, den Sie zu dem gezeigte Geschäft geliefert haben."} },
         { "day objects recall", new string[] {"After the beep, please recall all items from this delivery day.", "Bitte nennen Sie nach dem Signalton möglichst viele Gegenstände, die Sie an diesem Liefertag geliefert haben."} },
         { "microphone test", new string[] {"Microphone Test", "Mikrofontest"} },
         { "next store prompt", new string[] {"The next target store is the ", "Das nächste Geschäft ist: "} },

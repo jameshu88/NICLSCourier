@@ -399,7 +399,7 @@ public class DeliveryExperiment : CoroutineExperiment
         }
 
         // if (DEBUG)
-        // ConfigureExperiment(false, false, true, 1, "EFRCourierReadOnly");
+        // ConfigureExperiment(false, false, true, 0, "EFRCourierReadOnly");
 
         // Session check
         if (sessionNumber == -1)
@@ -1614,11 +1614,11 @@ public class DeliveryExperiment : CoroutineExperiment
             {
                 if (useElemem)
                 {
-                    // Elemem testing code
-                    if (elememInterface == null)
-                        elememInterface = GameObject.Find("ElememInterface").GetComponent<ElememInterface>();
-                        elememInterface.elememInterfaceHelper.Start();
-                        elememInterface.elememInterfaceHelper.StartLoop();
+                    // // Elemem testing code
+                    // if (elememInterface == null)
+                    //     elememInterface = GameObject.Find("ElememInterface").GetComponent<ElememInterface>();
+                    //     elememInterface.elememInterfaceHelper.Start();
+                    //     elememInterface.elememInterfaceHelper.StartLoop();
                     
                     int iterations = (int)Math.Round(FREE_RECALL_LENGTH / (STIM_DURATION * 2));
                     elememInterface.DoRepeatingStim(iterations, ELEMEM_REP_SWITCH_DELAY, ELEMEM_REP_STIM_INTERVAL);

@@ -165,7 +165,7 @@ public static class LanguageSource
 
 
         { "deliv day pointing accuracy title", new string[] {"Pointing Accuracy", "Zeigegenauigkeit"} },
-        { "deliv day progress title", new string[] {"", GERMAN_TRANSLATION_NEEDED} },
+        { "deliv day progress title", new string[] {"", ""} },
 
 
         { "final store recall title", new string [] {"Final Store Recall", "Abschließender Abruf der Geschäfte"} },

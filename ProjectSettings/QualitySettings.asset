@@ -41,9 +41,7 @@ QualitySettings:
     asyncUploadPersistentBuffer: 1
     resolutionScalingFixedDPIFactor: 1
     customRenderPipeline: {fileID: 0}
-    excludedTargetPlatforms:
-    - Standalone
-    - Server
+    excludedTargetPlatforms: []
   - serializedVersion: 2
     name: Freiberg
     pixelLightCount: 1
@@ -79,7 +77,9 @@ QualitySettings:
     asyncUploadPersistentBuffer: 1
     resolutionScalingFixedDPIFactor: 1
     customRenderPipeline: {fileID: 0}
-    excludedTargetPlatforms: []
+    excludedTargetPlatforms:
+    - Standalone
+    - Server
   m_PerPlatformDefaultQuality:
     Android: 0
     BlackBerry: 0

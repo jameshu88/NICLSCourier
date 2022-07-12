@@ -53,3 +53,37 @@ Load and Play the Game
 *************
 #. Go to *Assets > Scenes* in the project pane on the bottom of Unity and double click the *MainMenu* file
 #. Click the play button at the top
+
+*************
+Reducing Motion Sickness
+*************
+This section describes common causes of motion sickness and how to minimize it.
+Motion sickness itself is caused by multiple senses of the body not matching up in the way the mind expects them to (most often your visual system and your inner ear).
+Note that this is distinct from how realistic the game is, but it is related. The more realistic a game seems, the better the senses need to match up (more complete apriori expectations in the mind).
+
+*************
+Acceleration
+*************
+Acceleration is the cause of almost all motion sickness.
+#. Accelerating forward and backwards are usually not much of a problem, but turning is!
+
+*************
+Blurring
+*************
+#. Blurring has been shown to be a cause of increased motion sickness (https://pubmed.ncbi.nlm.nih.gov/25945660/). Do not blur unless you have a REALLY good reason to. 
+#. That said, blurring during rotation could potentially decrease motion sickness (https://arxiv.org/abs/1710.02599). Note that the linked study is in VR.
+#. Blurring can also occur due to the characteristics of the monitor. The GtG and MPRT are the most important specs of a monitor to reduce motion sickness. The article linked here is the best explanation that I've seen (https://blurbusters.com/gtg-versus-mprt-frequently-asked-questions-about-display-pixel-response/). <TODO add how to reduce this>
+
+*************
+Player Input Does Not Match Character Movement (And Lag)
+*************
+This is a sneaky one that pops up when you're not expecting it.
+#. An example of when this occurs is if you use a simple average of the joystick direction to set the new direction in an attempt to smooth a player's controls. Unfortunately, what this can actually do it cause a lag between the users input and their desired direction causing a feeling of sliding on ice. This lag can cause motion sickness.
+#. Also, lag in general can be thought of as causing miniature accelerations and decelerations of the visual field as if a person is jolting their head very quickly. Have you ever watched an unstabilized GoPro video of someone on a bike? If not, try it (https://www.youtube.com/watch?v=HS5HVV5BPKQ).
+
+*************
+Other Ideas to Consider
+*************
+#. Place a tiny dot or crosshair in the middle of the screen as a static fixation point (Dying Light 2 had this)
+#. Do not allow turning and forward movement at the same time
+#. Radial blur to draw attention to a fixed point (this may not work)

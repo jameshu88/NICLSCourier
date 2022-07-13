@@ -17,7 +17,9 @@ public static class LanguageSource
         { "final recall", new string[] {"All items exhausted. Press any key to proceed to final recall.", "Alle Gegenstände ausgeliefert. Weiter mit beliebiger Taste."} },
         { "final no recall", new string[] {"All items exhausted. Press any key to proceed.", "Alle Gegenstände ausgeliefert. Drücken Sie eine beliebige Taste, um fortzufahren."} },
         { "store cue recall", new string[] {"Please recall which item you delivered to the store shown on the screen." + "\n\n" + 
-                                            "If you can't remember the item, please guess an item, and press the (B) button immediately afterwards to indicate it was a guess.", "Bitte nennen Sie den Gegenstand, den Sie zu dem gezeigte Geschäft geliefert haben."} },
+                                            "If you can't remember the item, please guess an item, and press the (B) button immediately afterwards to indicate it was a guess.", 
+                                            "Bitte nennen Sie den Gegenstand, den Sie zu dem gezeigte Geschäft geliefert haben." + "\n\n" + 
+                                            "Wenn Sie sich nicht an den Gegenstand erinnern können,raten Sie bitte einen Gegenstand und drücken Sie unmittelbar danach die Taste (B), um anzuzeigen, dass Sie geraten haben."} },
         { "day objects recall", new string[] {"After the beep, please recall all items from this delivery day.", "Bitte nennen Sie nach dem Signalton möglichst viele Gegenstände, die Sie an diesem Liefertag geliefert haben."} },
         { "microphone test", new string[] {"Microphone Test", "Mikrofontest"} },
         { "next store prompt", new string[] {"The next target store is the ", "Das nächste Geschäft ist: "} },
@@ -51,9 +53,11 @@ public static class LanguageSource
         { "next practice day", new string[] { "Press (X) to proceed to the next practice delivery day.",
                                               "Drücken Sie (X), um die nächste Übungsrunde zu starten." } },
 
-        { "efr reminder title", new string[] { "Reminder!", GERMAN_TRANSLATION_NEEDED} },
+        { "efr reminder title", new string[] { "Reminder!", "Hinweis!"} },
         { "efr reminder main", new string[] { "When recalling items at the end of the delivery day, we want you to vocalize every specific, concrete item that comes to your mind, even if you have already recalled it, or if it was not presented on the most recent delivery day." + "\n\n" +  
-                                              "In these cases, press the (B) button after recalling that word, but before recalling the next word"}},
+                                              "In these cases, press the (B) button after recalling that word, but before recalling the next word", 
+                                              "Wenn Sie am Ende eines Liefertages ausgewählte Gegenstände erinnern, möchten wir, dass Sie den Namen jedes spezifischen, konkreten Gegenstands, der Ihnen in den Sinn kommt, aussprechen, auch wenn Sie ihn bereits ausgesprochen haben oder wenn er am letzten Liefertag nicht geliefert worden ist." + "\n\n" + 
+                                              "Drücken Sie in diesen Fällen die Taste (B), nachdem Sie den Namen des Gegenstands genannt haben, aber noch bevor Sie das den Namen des nächsten Gegenstands nennen."}},
 
         { "one btn efr intro video", new string[] { "Press (Y) to continue to the next delivery day, \n Press (N) to replay instructional video.",
                                                     "Drücken Sie (Y), um den nächsten Auslieferungstag zu starten, \n Drücken Sie (N), um das Video noch einmal zu sehen." } },
@@ -132,7 +136,7 @@ public static class LanguageSource
                                                                    "Drücken Sie die Taste (B) 20 Mal und warten Sie zwischen den Tastendrücken etwa 3 Sekunden.\n\nDie Bildschirmanzeige wird automatisch aktualisiert, wenn Sie mit dieser Aufgabe fertig sind." } },
 
         { "er check main", new string[] { "Let's make sure your keys are working.", "Wir testen nun die Tastenzuordnung."} },
-        { "er check pass", new string[] { "Great! Your keys are working.", GERMAN_TRANSLATION_NEEDED} },
+        { "er check pass", new string[] { "Great! Your keys are working.", "Sehrgut! Die Tasten funktionieren."} },
 
         { "er check understanding title", new string[] { "ER Review", "" } },
         { "er check understanding main", new string[] { "Please press the buzzer to call the researcher in now.", "Bitte rufen Sie nun den Versuchsleiter."} },

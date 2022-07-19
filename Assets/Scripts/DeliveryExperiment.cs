@@ -2209,7 +2209,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 Func<IEnumerator> func = () => { return messageImageDisplayer.DisplayMessageTimedKeypressBold(
                     messageImageDisplayer.cued_recall_title, waitTime, ActionButton.RejectButton, EFR_COURIER ? "title text" : "continue text", "reject button"); };
                 messageImageDisplayer.cued_recall_message.SetActive(true);
-                messageImageDisplayer.DoCuedRecallProgressDisplay(true, MAX_CUED_RECALL_TIME_PER_STORE);
+                messageImageDisplayer.DoRecallProgressDisplay(true, MAX_CUED_RECALL_TIME_PER_STORE);
                 yield return messageImageDisplayer.DisplayMessageFunction(store.familiarization_object, func);
                 messageImageDisplayer.cued_recall_message.SetActive(false);
             }

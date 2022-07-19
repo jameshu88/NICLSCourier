@@ -133,8 +133,13 @@ public static class UnityEPL
         }
         defaultRoot = System.IO.Path.Combine(defaultRoot, "data");
 
-        string directory = System.IO.Path.Combine(defaultRoot, UnityEPL.GetExperimentName());
-        directory = System.IO.Path.Combine(directory, string.Join("", UnityEPL.GetParticipants()));
+        // LC: old location: /data/experiment/participant/session/
+        // string directory = System.IO.Path.Combine(defaultRoot, UnityEPL.GetExperimentName());
+        // directory = System.IO.Path.Combine(directory, string.Join("", UnityEPL.GetParticipants()));
+
+        // LC: new method (/data/participant/experiment/session/)
+        string directory = System.IO.Path.Combine(defaultRoot, string.Join("", UnityEPL.GetParticipants()));
+        directory = System.IO.Path.Combine(directory, UnityEPL.GetExperimentName());
         return directory;
     }
 

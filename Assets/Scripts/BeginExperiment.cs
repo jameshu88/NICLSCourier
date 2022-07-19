@@ -19,19 +19,22 @@ public class BeginExperiment : MonoBehaviour
     public UnityEngine.UI.Toggle useElememToggle;
 
     // TODO: JPB: Make these configuration variables
-    private const bool HOSPITAL_COURIER = true;
+    private const bool EFR_COURIER = true;
     private const bool NICLS_COURIER = false;
     private const bool VALUE_COURIER = false;
 
-    string experiment_name = HOSPITAL_COURIER ? "StandardCourier" :
-                             NICLS_COURIER ? "NiclsCourier" :
-                             "StandardCourier";
+
+    string experiment_name = EFR_COURIER ? EXP_NAME_EFR :
+                             NICLS_COURIER ? EXP_NAME_NICLS :
+                             VALUE_COURIER ? EXP_NAME_VALUE :
+                             EXP_NAME_COURIER;
 
     private const string scene_name = "MainGame";
 
     public const string EXP_NAME_COURIER = "Courier";
-    public const string EXP_NAME_HOSPITAL = "StandardCourier";
+    public const string EXP_NAME_EFR = "EFRCourier";
     public const string EXP_NAME_NICLS = "NiclsCourier";
+    public const string EXP_NAME_VALUE = "ValueCourier";
 
     private void OnEnable() {
         #if UNITY_WEBGL
@@ -132,18 +135,17 @@ public class BeginExperiment : MonoBehaviour
 
         //UnityEPL.SetSessionNumber(NextSessionNumber());
         UnityEPL.AddParticipant(participantCodeInput.text);
-        if (experiment_name == EXP_NAME_NICLS)
-        {
-            if (useNiclsToggle.isOn)
-                experiment_name += "ClosedLoop";
-            else
-                experiment_name += "ReadOnly";
-        }
+        if (experiment_name == EXP_NAME_NICLS && useNiclsToggle.isOn)
+            experiment_name += "ClosedLoop";
+        else if (experiment_name == EXP_NAME_EFR && useElememToggle.isOn)
+            experiment_name += "OpenLoop";
+        else
+            experiment_name += "ReadOnly";
+
         UnityEPL.SetExperimentName(experiment_name);
 
         LockLanguage();
         // TODO: JPB: Use NextSessionNumber()
-        // LC: added in Elemem 
         DeliveryExperiment.ConfigureExperiment(useRamulatorToggle.isOn, useNiclsToggle.isOn, useElememToggle.isOn,
                                                UnityEPL.GetSessionNumber(), experiment_name);
         Debug.Log("Ram On: " + useRamulatorToggle.isOn);

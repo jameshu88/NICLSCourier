@@ -34,10 +34,10 @@ public class MessageImageDisplayer : MonoBehaviour
     public GameObject cued_recall_message;
     public GameObject cued_recall_title;
     public GameObject cued_recall_continue;
-    public GameObject recall_progress_bar;
-    public Image recall_progress;
-    public bool show_recall_progress;
-    private float recall_time;
+    public GameObject progress_bar;
+    public Image progress;
+    public bool show_progress;
+    private float progress_time;
     public GameObject sliding_scale_display;
     public GameObject sliding_scale_2_display;
     public GameObject general_message_display;
@@ -60,14 +60,14 @@ public class MessageImageDisplayer : MonoBehaviour
 
     void Update()
     {
-        if (show_recall_progress)
-            recall_progress.fillAmount -= (1f / recall_time) * Time.deltaTime;
+        if (show_progress)
+            progress.fillAmount -= (1f / progress_time) * Time.deltaTime;
 
-        if (recall_progress.fillAmount == 0)
+        if (progress.fillAmount == 0)
         {
-            recall_progress_bar.SetActive(false);
-            show_recall_progress = false;
-            recall_progress.fillAmount = 1;
+            progress_bar.SetActive(false);
+            show_progress = false;
+            progress.fillAmount = 1;
         }
     }
 
@@ -423,11 +423,11 @@ public class MessageImageDisplayer : MonoBehaviour
             cued_recall_continue.transform.Find("continue text").GetComponent<Text>().text = LanguageSource.GetLanguageString(bottomText);
     }
 
-    public void DoRecallProgressDisplay(bool progressOn, float time)
+    public void DoProgressDisplay(bool progressOn, float time)
     {
-        recall_progress_bar.SetActive(progressOn);
-        recall_time = time;
-        show_recall_progress = progressOn;
+        progress_bar.SetActive(progressOn);
+        progress_time = time;
+        show_progress = progressOn;
     }
 
     public void SetReminderText(string store_name)
@@ -439,17 +439,18 @@ public class MessageImageDisplayer : MonoBehaviour
     public void SetDeliverItemText(string name)
     {
         string prompt_string = name;
-        string update_name = "";
+        string lowercase_name = "";
         foreach (char c in prompt_string)
         {
             if(char.IsLetter(c)||c == '\'')
-                update_name += char.ToLower(c);
+                lowercase_name += char.ToLower(c);
             else
-                update_name += " ";
+                lowercase_name += " ";
             
         }
         Button btn = deliver_item_visual_dislay.GetComponent<Button>();
-        deliver_item_display_text.text = LanguageSource.current_language.Equals(LanguageSource.LANGUAGE.ENGLISH) ? update_name : name;
+        // LC: for German, capitalization matters.
+        deliver_item_display_text.text = LanguageSource.current_language.Equals(LanguageSource.LANGUAGE.GERMAN) ? name : lowercase_name;
     }
 
     public void SetEfrText(string titleText = "", string descriptiveText = "", string leftButton = null, string rightButton = null)

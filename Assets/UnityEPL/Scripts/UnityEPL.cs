@@ -114,9 +114,6 @@ public static class UnityEPL
     /// The default participant folder is the folder where the application is running, plus /data/experiment/participant/.  If you have already overridden the default, however, this will throw a warning and return your specified path.
     /// </summary>
     /// <returns>The participant folder.</returns>
-
-    // LC: instead of /data/experiment/participant, do /data/participant/experiment/session/ to match how RAM data are stored in rhino
-    // LC: old location: /data/experiment/participant/session/
     public static string GetParticipantFolder()
     {
         if (dataPath != null)
@@ -136,7 +133,7 @@ public static class UnityEPL
         }
         defaultRoot = System.IO.Path.Combine(defaultRoot, "data");
 
-        // LC: default method commented out
+        // LC: old location: /data/experiment/participant/session/
         // string directory = System.IO.Path.Combine(defaultRoot, UnityEPL.GetExperimentName());
         // directory = System.IO.Path.Combine(directory, string.Join("", UnityEPL.GetParticipants()));
 

@@ -24,16 +24,17 @@ public class BeginExperiment : MonoBehaviour
     private const bool VALUE_COURIER = false;
 
 
-    string experiment_name = EFR_COURIER ? "EFRCourier" :
-                             NICLS_COURIER ? "NiclsCourier" :
-                             VALUE_COURIER ? "ValueCourier" :
-                             "Courier";
+    string experiment_name = EFR_COURIER ? EXP_NAME_EFR :
+                             NICLS_COURIER ? EXP_NAME_NICLS :
+                             VALUE_COURIER ? EXP_NAME_VALUE :
+                             EXP_NAME_COURIER;
 
     private const string scene_name = "MainGame";
 
     public const string EXP_NAME_COURIER = "Courier";
-    public const string EXP_NAME_EFR = "EFR" + EXP_NAME_COURIER;
+    public const string EXP_NAME_EFR = "EFRCourier";
     public const string EXP_NAME_NICLS = "NiclsCourier";
+    public const string EXP_NAME_VALUE = "ValueCourier";
 
     private void OnEnable() {
         #if UNITY_WEBGL

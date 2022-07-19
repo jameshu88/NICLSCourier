@@ -116,6 +116,7 @@ public static class UnityEPL
     /// <returns>The participant folder.</returns>
 
     // LC: instead of /data/experiment/participant, do /data/participant/experiment/session/ to match how RAM data are stored in rhino
+    // LC: old location: /data/experiment/participant/session/
     public static string GetParticipantFolder()
     {
         if (dataPath != null)

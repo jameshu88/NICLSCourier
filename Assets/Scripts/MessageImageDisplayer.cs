@@ -36,6 +36,8 @@ public class MessageImageDisplayer : MonoBehaviour
     public GameObject cued_recall_continue;
     public GameObject cued_recall_progress_bar;
     public Image cued_recall_progress;
+    public bool show_cued_recall_progress;
+    private float cued_recall_time;
     public GameObject sliding_scale_display;
     public GameObject sliding_scale_2_display;
     public GameObject general_message_display;
@@ -54,6 +56,18 @@ public class MessageImageDisplayer : MonoBehaviour
         RightButton,
         RejectButton,
         ContinueButton
+    }
+
+    void Update()
+    {
+        if (show_cued_recall_progress)
+            cued_recall_progress.fillAmount -= (1f / cued_recall_time) * Time.deltaTime;
+
+        if (cued_recall_progress.fillAmount == 0)
+        {
+            show_cued_recall_progress = false;
+            cued_recall_progress.fillAmount = 1;
+        }
     }
 
     public IEnumerator DisplayLanguageMessage(GameObject[] langMessages, string buttonName = "Continue")
@@ -406,6 +420,13 @@ public class MessageImageDisplayer : MonoBehaviour
         }
         else
             cued_recall_continue.transform.Find("continue text").GetComponent<Text>().text = LanguageSource.GetLanguageString(bottomText);
+    }
+
+    public void DoCuedRecallProgressDisplay(bool progressOn, float time)
+    {
+        cued_recall_progress_bar.SetActive(progressOn);
+        cued_recall_time = time;
+        show_cued_recall_progress = progressOn;
     }
 
     public void SetReminderText(string store_name)

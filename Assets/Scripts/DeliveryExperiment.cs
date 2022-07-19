@@ -50,8 +50,6 @@ public class DeliveryExperiment : CoroutineExperiment
     // TODO: JPB: Make these configuration variables
 
     // Experiment type
-    // LC: TODO: maybe set up a real "standard" courier?
-    private const bool STANDARD_COURIER = false;
     private const bool EFR_COURIER = true;
     private const bool NICLS_COURIER = false;
     private const bool VALUE_COURIER = false;
@@ -203,8 +201,6 @@ public class DeliveryExperiment : CoroutineExperiment
     private const int ELEMEM_REP_STIM_INTERVAL = 6000; // ms, 2*STIM_DURATION
     private const int ELEMEM_REP_STIM_DELAY = 1500; // ms
     private const int ELEMEM_REP_SWITCH_DELAY = 3000; // ms
-
-    private static bool isCuedRecall = false;
 
     // Stim Tags
     List<string> GenerateStimTags(int numTrials)
@@ -378,10 +374,6 @@ public class DeliveryExperiment : CoroutineExperiment
             fpsValueDict.Add("fps value", fpsValue);
             scriptedEventReporter.ReportScriptedEvent("fps value", fpsValueDict);
         }
-
-        if (isCuedRecall)
-            messageImageDisplayer.cued_recall_progress.fillAmount -= (1f / MAX_CUED_RECALL_TIME_PER_STORE) * Time.deltaTime;
-
     }
 
     void Start()
@@ -613,9 +605,7 @@ public class DeliveryExperiment : CoroutineExperiment
         textDisplayer.DisplayText("end text", endMessage);
 
         #if !UNITY_WEBGL // WebGL DLL
-            // LC: ELEMEM
-            if (EFR_COURIER)
-                elememInterface.SendExitMessage();
+            elememInterface.SendExitMessage();
 
             // TODO: JPB: (Hokua) Wait for button press to quit
             while (true)
@@ -2219,10 +2209,9 @@ public class DeliveryExperiment : CoroutineExperiment
                 Func<IEnumerator> func = () => { return messageImageDisplayer.DisplayMessageTimedKeypressBold(
                     messageImageDisplayer.cued_recall_title, waitTime, ActionButton.RejectButton, EFR_COURIER ? "title text" : "continue text", "reject button"); };
                 messageImageDisplayer.cued_recall_message.SetActive(true);
-                DoCuedRecallProgressDisplay(true);
+                messageImageDisplayer.DoCuedRecallProgressDisplay(true, MAX_CUED_RECALL_TIME_PER_STORE);
                 yield return messageImageDisplayer.DisplayMessageFunction(store.familiarization_object, func);
                 messageImageDisplayer.cued_recall_message.SetActive(false);
-                DoCuedRecallProgressDisplay(false);
             }
         }
         else
@@ -2244,16 +2233,6 @@ public class DeliveryExperiment : CoroutineExperiment
         }
 
         yield return null;
-    }
-
-    private void DoCuedRecallProgressDisplay(bool progressOn)
-    {
-        messageImageDisplayer.cued_recall_progress_bar.SetActive(progressOn);
-        // messageImageDisplayer.cued_recall_progress_bar.GetComponent<Slider>().maxValue = (int)MAX_CUED_RECALL_TIME_PER_STORE;
-        isCuedRecall = progressOn;
-
-        if (!progressOn)
-            messageImageDisplayer.cued_recall_progress.fillAmount = 1;
     }
 
     private IEnumerator DoTwoBtnErKeypressCheck()

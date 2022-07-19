@@ -32,7 +32,7 @@ public class BeginExperiment : MonoBehaviour
     private const string scene_name = "MainGame";
 
     public const string EXP_NAME_COURIER = "Courier";
-    public const string EXP_NAME_EFR = "EFRCourier";
+    public const string EXP_NAME_EFR = "EFR" + EXP_NAME_COURIER;
     public const string EXP_NAME_NICLS = "NiclsCourier";
 
     private void OnEnable() {
@@ -134,21 +134,12 @@ public class BeginExperiment : MonoBehaviour
 
         //UnityEPL.SetSessionNumber(NextSessionNumber());
         UnityEPL.AddParticipant(participantCodeInput.text);
-        if (experiment_name == EXP_NAME_NICLS)
-        {
-            if (useNiclsToggle.isOn)
-                experiment_name += "ClosedLoop";
-            else
-                experiment_name += "ReadOnly";
-        }
-        // LC: add tags 
-        if (experiment_name == EXP_NAME_EFR)
-        {
-            if (useElememToggle.isOn)
-                experiment_name += "OpenLoop";
-            else
-                experiment_name += "ReadOnly";
-        }
+        if (experiment_name == EXP_NAME_NICLS && useNiclsToggle.isOn)
+            experiment_name += "ClosedLoop";
+        else if (experiment_name == EXP_NAME_EFR && useElememToggle.isOn)
+            experiment_name += "OpenLoop";
+        else
+            experiment_name += "ReadOnly";
 
         UnityEPL.SetExperimentName(experiment_name);
 

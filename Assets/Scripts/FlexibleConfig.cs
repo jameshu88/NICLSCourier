@@ -155,7 +155,7 @@ public class Config
             if (scriptedEventReporter != null)
                 scriptedEventReporter.ReportScriptedEvent("experimentConfig", new Dictionary<string, object>(experimentConfig));
             #if !UNITY_WEBGL // System.IO
-                FlexibleConfig.WriteToText(systemConfig, Path.Combine(path, experimentConfigName + ".json"));
+                FlexibleConfig.WriteToText(experimentConfig, Path.Combine(path, experimentConfigName + ".json"));
             #endif // !UNITY_WEBGL
         }
 

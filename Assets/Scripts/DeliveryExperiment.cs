@@ -131,8 +131,8 @@ public class DeliveryExperiment : CoroutineExperiment
         private Syncbox syncs;
         public RamulatorInterface ramulatorInterface;
         public NiclsInterface niclsInterface;
-        public ElememInterface elememInterface;
     #endif // !UNITY_WEBGL
+    public ElememInterface elememInterface;
 
     public GameObject player;
     public PlayerMovement playerMovement;
@@ -328,7 +328,7 @@ public class DeliveryExperiment : CoroutineExperiment
             useRamulator = newUseRamulator;
             useNiclServer = newUseNiclServer;
             useElemem = newUseElemem;
-            Config.elememStimMode = useElemem;
+            Config.elememStimMode = useElemem ? "open" : "none";
         #endif // !UNITY_WEBGL
         sessionNumber = newSessionNumber;
         continuousSessionNumber = useNiclServer ? NICLS_READ_ONLY_SESSIONS + sessionNumber :
@@ -469,18 +469,18 @@ public class DeliveryExperiment : CoroutineExperiment
             // Setup NiclServer
             if (useNiclServer)
             {
-                yield return niclsInterface.BeginNewSession(sessionNumber);
+                yield return niclsInterface.BeginNewSession(false, Config.niclServerIP, Config.niclServerPort, "Cont");
                 SetupNiclsClassifier();
                 niclsInterface.SendReadOnlyState(1);
             }
             else
             {
-                yield return niclsInterface.BeginNewSession(sessionNumber, true);
+                yield return niclsInterface.BeginNewSession(true, Config.niclServerIP, Config.niclServerPort, "Cont");
             }
 
             // Setup Elemem
-            yield return elememInterface.BeginNewSession(sessionNumber,
-                disableInterface: !Config.elememOn,
+            yield return elememInterface.BeginNewSession(!Config.elememOn,
+                Config.elememServerIP, Config.elememServerPort, Config.elememStimMode,
                 uniqueStimTags: useElemem ? stimTags.ToArray() : null);
         #endif // !UNITY_WEBGL
 
@@ -929,7 +929,7 @@ public class DeliveryExperiment : CoroutineExperiment
         }
 
         SetRamulatorState("ENCODING", true, new Dictionary<string, object>());
-        SetElememState("ENCODING");
+        SetElememState(ElememStateMsg.ENCODING);
 
         messageImageDisplayer.please_find_the_blah_reminder.SetActive(true);
 
@@ -1199,7 +1199,7 @@ public class DeliveryExperiment : CoroutineExperiment
             // Next day message (and trial skip button)
             SetRamulatorState("WAITING", true, new Dictionary<string, object>());
             // LC: ELEMEM
-            SetElememState("WAITING");
+            SetElememState(ElememStateMsg.WAITING);
             if (!DeliveryItems.ItemsExhausted())
             {
                 BlackScreen();
@@ -1304,7 +1304,7 @@ public class DeliveryExperiment : CoroutineExperiment
             // Next day message (and trial skip button)
             SetRamulatorState("WAITING", true, new Dictionary<string, object>());
             // LC: ELEMEM
-            SetElememState("WAITING");
+            SetElememState(ElememStateMsg.WAITING);
             if (!DeliveryItems.ItemsExhausted())
             {
                 BlackScreen();
@@ -1405,7 +1405,7 @@ public class DeliveryExperiment : CoroutineExperiment
     private IEnumerator DoFixation(float time, bool practice = false)
     {
         scriptedEventReporter.ReportScriptedEvent("start fixation");
-        SetElememState("ORIENT");
+        SetElememState(ElememStateMsg.ORIENT);
         BlackScreen();
 
         if (practice)
@@ -1532,7 +1532,7 @@ public class DeliveryExperiment : CoroutineExperiment
     {
         SetRamulatorState("RETRIEVAL", true, new Dictionary<string, object>());
         // LC: ELEMEM
-        SetElememState("RETRIEVAL");
+        SetElememState(ElememStateMsg.RETRIEVAL);
 
         if (VALUE_COURIER)
         {
@@ -1588,7 +1588,7 @@ public class DeliveryExperiment : CoroutineExperiment
             recordingData.Add("trial number", continuousTrialNum);
             scriptedEventReporter.ReportScriptedEvent("object recall recording start", recordingData);
 
-            SetElememState("RECALL", new Dictionary<string, object>{ {"duration", practice ? PRACTICE_FREE_RECALL_LENGTH : FREE_RECALL_LENGTH } });
+            SetElememState(ElememStateMsg.RECALL, new Dictionary<string, object>{ {"duration", practice ? PRACTICE_FREE_RECALL_LENGTH : FREE_RECALL_LENGTH } });
 
             string output_directory = UnityEPL.GetDataPath();
             string wavFilePath = practice
@@ -1711,7 +1711,7 @@ public class DeliveryExperiment : CoroutineExperiment
             
             #if !UNITY_WEBGL // Microphone
                 scriptedEventReporter.ReportScriptedEvent("cued recall recording start", cuedRecordingData);
-                SetElememState("RECALL", new Dictionary<string, object>{ {"duration", MAX_CUED_RECALL_TIME_PER_STORE} });
+                SetElememState(ElememStateMsg.RECALL, new Dictionary<string, object>{ {"duration", MAX_CUED_RECALL_TIME_PER_STORE} });
                 soundRecorder.StartRecording(wavFilePath);
 
                 if (practice && trialNumber == 0)
@@ -1725,7 +1725,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 soundRecorder.StopRecording();
             #else
                 scriptedEventReporter.ReportScriptedEvent("cued recall answer start", cuedRecordingData);
-                yield return DoTypedResponses(trialNumber, "cued recall", CUED_RECALL_TIME_PER_STORE, cuedInputField, cuedResponse, cueStore.GetStoreName());
+                yield return DoTypedResponses(trialNumber, "cued recall", MAX_CUED_RECALL_TIME_PER_STORE, cuedInputField, cuedResponse, cueStore.GetStoreName());
                 scriptedEventReporter.ReportScriptedEvent("cued recall answer stop", cuedRecordingData);
             #endif
             
@@ -1767,7 +1767,7 @@ public class DeliveryExperiment : CoroutineExperiment
         #if !UNITY_WEBGL // Microphone and System.IO
             SetRamulatorState("RETRIEVAL", true, new Dictionary<string, object>());
             // LC: ELEMEM
-            SetElememState("RETRIEVAL");
+            SetElememState(ElememStateMsg.RETRIEVAL);
 
             string output_directory = UnityEPL.GetDataPath();
             string output_file_name;
@@ -1794,7 +1794,7 @@ public class DeliveryExperiment : CoroutineExperiment
                     AppendWordToLst(lstFilepath, store.GetStoreName());
 
                 scriptedEventReporter.ReportScriptedEvent("final store recall recording start", new Dictionary<string, object>());
-                SetElememState("RECALL", new Dictionary<string, object>{ {"duration", STORE_FINAL_RECALL_LENGTH} });
+                SetElememState(ElememStateMsg.RECALL, new Dictionary<string, object>{ {"duration", STORE_FINAL_RECALL_LENGTH} });
                 soundRecorder.StartRecording(wavFilePath);
 
                 textDisplayer.ClearText();
@@ -1846,7 +1846,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 AppendWordToLst(lstFilepath, deliveredObject);
 
             scriptedEventReporter.ReportScriptedEvent("final object recall recording start");
-            SetElememState("RECALL", new Dictionary<string, object>{ {"duration", OBJECT_FINAL_RECALL_LENGTH} });
+            SetElememState(ElememStateMsg.RECALL, new Dictionary<string, object>{ {"duration", OBJECT_FINAL_RECALL_LENGTH} });
             soundRecorder.StartRecording(wavFilePath);
 
             textDisplayer.ClearText();
@@ -2472,7 +2472,7 @@ public class DeliveryExperiment : CoroutineExperiment
         #endif // !UNITY_WEBG
     }
 
-    protected override void SetElememState(string stateName, Dictionary<string, object> extraData = null)
+    protected override void SetElememState(ElememStateMsg stateName, Dictionary<string, object> extraData = null)
     {
         #if !UNITY_WEBGL // Elemem
             if (extraData == null)
@@ -2610,7 +2610,7 @@ public class DeliveryExperiment : CoroutineExperiment
     protected IEnumerator DisplayMessageAndWait(string description, string message)
     {
         SetRamulatorState("WAITING", true, new Dictionary<string, object>());
-        SetElememState("WAITING");
+        SetElememState(ElememStateMsg.WAITING);
 
         BlackScreen();
         textDisplayer.DisplayText(description, message + "\r\nPress (x) to continue");

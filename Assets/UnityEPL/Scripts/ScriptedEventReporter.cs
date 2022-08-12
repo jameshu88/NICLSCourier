@@ -28,7 +28,7 @@ public class ScriptedEventReporter : DataReporter
                 dataDict = new Dictionary<string, object>();
 
             if (!noNetwork)
-                elememInterface.SendStateMessage(elemem_type, dataDict);
+                elememInterface.SendLogMessage(elemem_type, dataDict);
         }
         #endif
 

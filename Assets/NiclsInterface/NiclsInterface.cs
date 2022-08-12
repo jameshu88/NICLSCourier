@@ -121,13 +121,13 @@ public class NiclsInterfaceHelper : IHostPC
     public readonly object classifierResultLock = new object();
     public volatile int classifierResult = 0;
 
-    public NiclsInterfaceHelper(ScriptedEventReporter _scriptedEventReporter) { //InterfaceManager _im) {
+    public NiclsInterfaceHelper(ScriptedEventReporter _scriptedEventReporter, string ip, int port, string stimMode, string[] stimTags = null) {
         //im = _im;
         scriptedEventReporter = _scriptedEventReporter;
         listener = new NiclsListener(this);
         Start();
         StartLoop();
-        Connect();
+        Connect(ip, port, stimMode, stimTags);
         //Do(new EventBase(Connect));
     }
 
@@ -154,11 +154,11 @@ public class NiclsInterfaceHelper : IHostPC
         return niclServer.GetStream();
     }
 
-    public override void Connect(string[] stimtags = null) {
+    public override void Connect(string ip, int port, string stimMode, string[] stimTags = null) {
         niclServer = new TcpClient();
 
         //try {
-        IAsyncResult result = niclServer.BeginConnect(Config.niclServerIP, Config.niclServerPort, null, null);
+        IAsyncResult result = niclServer.BeginConnect(ip, port, null, null);
         result.AsyncWaitHandle.WaitOne(messageTimeout);
         niclServer.EndConnect(result);
         //}
@@ -367,13 +367,13 @@ public class NiclsInterface : MonoBehaviour
 
     private bool interfaceDisabled = false;
 
-    public IEnumerator BeginNewSession(int sessionNum, bool disableInterface = false)
+    public IEnumerator BeginNewSession(bool disableInterface, string ip, int port, string stimMode, string[] uniqueStimTags = null)
     {
         interfaceDisabled = disableInterface;
         if (interfaceDisabled)
             yield break;
 
-        niclsInterfaceHelper = new NiclsInterfaceHelper(scriptedEventReporter);
+        niclsInterfaceHelper = new NiclsInterfaceHelper(scriptedEventReporter, ip, port, stimMode, uniqueStimTags);
         UnityEngine.Debug.Log("Started Nicls Interface");
     }
 

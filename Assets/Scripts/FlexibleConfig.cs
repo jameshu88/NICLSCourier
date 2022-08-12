@@ -16,7 +16,7 @@ public class Config
     public static string onlineSystemConfigText = null;
     public static string onlineExperimentConfigText = null;
     // LC: TODO: COME UP WITH A BETTER WAY
-    public static bool elememStimMode = false;
+    public static string elememStimMode = "none";
 
     // System Settings
     public static string niclServerIP { get { return (string)Config.GetSetting("niclServerIP"); } }

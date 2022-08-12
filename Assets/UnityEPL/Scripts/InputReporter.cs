@@ -67,7 +67,7 @@ public class InputReporter : DataReporter
             string elemem_type = type.ToUpper();
             elemem_type = elemem_type.Replace(' ', '_');
 
-            elememInterface.SendStateMessage(elemem_type, dataDict);
+            elememInterface.SendLogMessage(elemem_type, dataDict);
         }
         #endif
     }
@@ -123,7 +123,7 @@ public class InputReporter : DataReporter
             string elemem_type = type.ToUpper();
             elemem_type = elemem_type.Replace(' ', '_');
 
-            elememInterface.SendStateMessage(elemem_type, dataDict);
+            elememInterface.SendLogMessage(elemem_type, dataDict);
         }
         #endif
     }
@@ -146,7 +146,7 @@ public class InputReporter : DataReporter
             string elemem_type = type.ToUpper();
             elemem_type = elemem_type.Replace(' ', '_');
 
-            elememInterface.SendStateMessage(elemem_type, dataDict);
+            elememInterface.SendLogMessage(elemem_type, dataDict);
         }
         #endif
     }

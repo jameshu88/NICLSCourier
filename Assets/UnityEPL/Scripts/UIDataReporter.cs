@@ -23,7 +23,7 @@ public class UIDataReporter : DataReporter
             string elemem_type = type.ToUpper();
             elemem_type = elemem_type.Replace(' ', '_');
 
-            elememInterface.SendStateMessage(elemem_type);
+            elememInterface.SendLogMessage(elemem_type);
         }
         #endif
     }

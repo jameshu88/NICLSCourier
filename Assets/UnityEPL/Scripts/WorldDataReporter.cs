@@ -82,7 +82,7 @@ public class WorldDataReporter : DataReporter
             if (transformDict == null)
                 transformDict = new Dictionary<string, object>();
 
-            elememInterface.SendStateMessage(elemem_type, transformDict);
+            elememInterface.SendLogMessage(elemem_type, transformDict);
         }
         #endif
     }
@@ -115,7 +115,7 @@ public class WorldDataReporter : DataReporter
             if (transformDict == null)
                 transformDict = new Dictionary<string, object>();
 
-            elememInterface.SendStateMessage(elemem_type, transformDict);
+            elememInterface.SendLogMessage(elemem_type, transformDict);
         }
         #endif
     }
@@ -155,7 +155,7 @@ public class WorldDataReporter : DataReporter
             if (transformDict == null)
                 transformDict = new Dictionary<string, object>();
 
-            elememInterface.SendStateMessage(elemem_type, transformDict);
+            elememInterface.SendLogMessage(elemem_type, transformDict);
         }
         #endif
     }
@@ -179,7 +179,7 @@ public class WorldDataReporter : DataReporter
             if (transformDict == null)
                 transformDict = new Dictionary<string, object>();
 
-            elememInterface.SendStateMessage(elemem_type, transformDict);
+            elememInterface.SendLogMessage(elemem_type, transformDict);
         }
         #endif
     }

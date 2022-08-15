@@ -29,13 +29,13 @@ public abstract class CoroutineExperiment : MonoBehaviour
 
     protected abstract void SetRamulatorState(string stateName, bool state, Dictionary<string, object> extraData);
 
-    protected abstract void SetElememState(string stateName, Dictionary<string, object> extraData = null);
+    protected abstract void SetElememState(ElememStateMsg stateName, Dictionary<string, object> extraData = null);
 
     protected IEnumerator DoSubjectSessionQuitPrompt(int sessionNumber, string message)
     {
         yield return null;
         SetRamulatorState("WAITING", true, new Dictionary<string, object>());
-        SetElememState("WAITING");
+        SetElememState(ElememStateMsg.WAITING);
         textDisplayer.DisplayText("subject/session confirmation", message);
         while (!InputManager.GetKeyDown(KeyCode.Y) && !InputManager.GetKeyDown(KeyCode.N))
         {
@@ -83,7 +83,7 @@ public abstract class CoroutineExperiment : MonoBehaviour
             textDisplayer.OriginalColor();
 
             SetRamulatorState("WAITING", true, new Dictionary<string, object>());
-            SetElememState("WAITING");
+            SetElememState(ElememStateMsg.WAITING);
             textDisplayer.DisplayText("microphone test confirmation", confirmation);
             while (!InputManager.GetKeyDown(KeyCode.Y) && !InputManager.GetKeyDown(KeyCode.N) && !InputManager.GetKeyDown(KeyCode.C) && 
                    !InputManager.GetButtonDown("Continue"))
@@ -126,7 +126,7 @@ public abstract class CoroutineExperiment : MonoBehaviour
         {
             //start video player and wait for it to stop playing
             SetRamulatorState("INSTRUCT", true, new Dictionary<string, object>());
-            SetElememState("INSTRUCT");
+            SetElememState(ElememStateMsg.INSTRUCT);
             videoSelector.SetVideo(videoType, videoIndex);
             scriptedEventReporter.ReportScriptedEvent("start video", new Dictionary<string, object> { { "video number", videoIndex } });
             videoPlayer.StartVideo();
@@ -136,7 +136,7 @@ public abstract class CoroutineExperiment : MonoBehaviour
             SetRamulatorState("INSTRUCT", false, new Dictionary<string, object>());
 
             SetRamulatorState("WAITING", true, new Dictionary<string, object>());
-            SetElememState("WAITING");
+            SetElememState(ElememStateMsg.WAITING);
             if (repeatPrompt != null)
             {
                 textDisplayer.DisplayText("repeat video prompt", repeatPrompt);
@@ -155,7 +155,7 @@ public abstract class CoroutineExperiment : MonoBehaviour
     protected IEnumerator PressAnyKey(string displayText)
     {
         SetRamulatorState("WAITING", true, new Dictionary<string, object>());
-        SetElememState("WAITING");
+        SetElememState(ElememStateMsg.WAITING);
         yield return null;
 
         textDisplayer.DisplayText("press any key prompt", displayText);

@@ -21,6 +21,11 @@ public class VideoSelector : MonoBehaviour
     public UnityEngine.Video.VideoClip ecrVideo;
     public UnityEngine.Video.VideoClip efrRecapVideo;
 
+    public UnityEngine.Video.VideoClip townlearningVideoGerman;
+    public UnityEngine.Video.VideoClip practiceVideoGerman;
+    public UnityEngine.Video.VideoClip ecrVideoGerman;
+    public UnityEngine.Video.VideoClip efrRecapVideoGerman;
+
     void OnEnable()
     {
         if (videoPlayer.clip == null)
@@ -82,16 +87,28 @@ public class VideoSelector : MonoBehaviour
                     videoPlayer.clip = musicVideos[videoIndex];
                     break;
                 case VideoType.townlearningVideo:
-                    videoPlayer.clip = townlearingVideo;
+                    if (LanguageSource.current_language == LanguageSource.LANGUAGE.GERMAN)
+                        videoPlayer.clip = townlearningVideoGerman;
+                    else
+                        videoPlayer.clip = townlearingVideo;
                     break;
                 case VideoType.practiceVideo:
-                    videoPlayer.clip = practiceVideo;
+                    if (LanguageSource.current_language == LanguageSource.LANGUAGE.GERMAN)
+                        videoPlayer.clip = practiceVideoGerman;
+                    else
+                        videoPlayer.clip = practiceVideo;
                     break;
                 case VideoType.ecrVideo:
-                    videoPlayer.clip = ecrVideo;
+                    if (LanguageSource.current_language == LanguageSource.LANGUAGE.GERMAN)
+                        videoPlayer.clip = ecrVideoGerman;
+                    else
+                        videoPlayer.clip = ecrVideo;
                     break;
                 case VideoType.efrRecapVideo:
-                    videoPlayer.clip = efrRecapVideo;
+                    if (LanguageSource.current_language == LanguageSource.LANGUAGE.GERMAN)
+                        videoPlayer.clip = efrRecapVideoGerman;
+                    else
+                        videoPlayer.clip = efrRecapVideo;
                     break;
                 default: break;
             }

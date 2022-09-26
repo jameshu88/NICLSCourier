@@ -62,7 +62,7 @@ public class DeliveryExperiment : CoroutineExperiment
     // debug
     private const bool skipFPS = true;
     
-    private const string COURIER_VERSION = "v6.0.1";
+    private const string COURIER_VERSION = "v6.0.2";
     private const bool DEBUG = false;
 
     private const string RECALL_TEXT = "*******"; // TODO: JPB: Remove this and use display system
@@ -133,6 +133,7 @@ public class DeliveryExperiment : CoroutineExperiment
         public NiclsInterface niclsInterface;
     #endif // !UNITY_WEBGL
     public ElememInterface elememInterface;
+    public FreiburgSyncboxInterface freiburgSyncboxInterface;
 
     public GameObject player;
     public PlayerMovement playerMovement;
@@ -438,7 +439,7 @@ public class DeliveryExperiment : CoroutineExperiment
             QualitySettings.vSyncCount = 1;
             Application.targetFrameRate = 300;
             // Start syncpulses
-            if (!Config.noSyncbox)
+            if (!Config.noSyncbox && !Config.freiburgSyncboxOn)
             {
                 syncs = GameObject.Find("SyncBox").GetComponent<Syncbox>();
                 syncs.StartPulse();
@@ -482,6 +483,10 @@ public class DeliveryExperiment : CoroutineExperiment
             yield return elememInterface.BeginNewSession(!Config.elememOn,
                 Config.elememServerIP, Config.elememServerPort, Config.elememStimMode,
                 uniqueStimTags: useElemem ? stimTags.ToArray() : null);
+
+            // Setup Freiburg Syncbox
+            yield return freiburgSyncboxInterface.BeginNewSession(!Config.freiburgSyncboxOn || Config.noSyncbox,
+                Config.freiburgSyncboxPort);
         #endif // !UNITY_WEBGL
 
         // Write versions to logfile

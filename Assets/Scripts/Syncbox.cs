@@ -19,7 +19,7 @@ public class Syncbox : MonoBehaviour
 
         try {
             if(!upennSync.Init()) {
-                Debug.Log("Invalid Handle");
+                Debug.Log("Invalid UPenn Handle");
                 upennSync = null;
             }
         }
@@ -29,7 +29,7 @@ public class Syncbox : MonoBehaviour
 
         try {
             if(!freiburgSync.Init()) {
-                Debug.Log("Invalid Handle");
+                Debug.Log("Invalid Freiburg Handle");
                 freiburgSync = null;
             }
         }

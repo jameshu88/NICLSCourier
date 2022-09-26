@@ -24,6 +24,8 @@ public class Config
     public static string elememServerIP { get { return (string)Config.GetSetting("elememServerIP"); } }
     public static int elememServerPort { get { return (int)Config.GetSetting("elememServerPort"); } }
     public static bool elememOn { get { return (bool)Config.GetSetting("elememOn"); } }
+    public static bool freiburgSyncboxOn { get { return (bool)Config.GetSetting("freiburgSyncboxOn"); } }
+    public static int freiburgSyncboxPort { get { return (int)Config.GetSetting("freiburgSyncboxPort"); } }
 
     // Hardware
     public static bool noSyncbox { get { return (bool)Config.GetSetting("noSyncbox"); } }

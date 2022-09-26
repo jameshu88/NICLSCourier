@@ -105,7 +105,7 @@ public class FreiburgSyncbox : EventLoop {
 
         freiburgSyncboxDeviceHandle = new MonoUsbDeviceHandle(freiburgSyncboxProfile.ProfileHandle);
         freiburgSyncboxDeviceHandle = freiburgSyncboxProfile.OpenDeviceHandle();
-       
+
         if (freiburgSyncboxDeviceHandle == null)
         {
             // throw new ExternalException("The ftd USB device was found but couldn't be opened");

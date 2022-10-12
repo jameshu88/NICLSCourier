@@ -136,7 +136,7 @@ public static class LanguageSource
                                                                    "Drücken Sie die Taste (B) 20 Mal und warten Sie zwischen den Tastendrücken etwa 3 Sekunden.\n\nDie Bildschirmanzeige wird automatisch aktualisiert, wenn Sie mit dieser Aufgabe fertig sind." } },
 
         { "er check main", new string[] { "Let's make sure your keys are working.", "Wir testen nun die Tastenzuordnung."} },
-        { "er check pass", new string[] { "Great! Your keys are working.", "Sehrgut! Die Tasten funktionieren."} },
+        { "er check pass", new string[] { "Great! Your keys are working.", "Sehr gut! Die Tasten funktionieren."} },
 
         { "er check understanding title", new string[] { "ER Review", "" } },
         { "er check understanding main", new string[] { "Please press the buzzer to call the researcher in now.", "Bitte rufen Sie nun den Versuchsleiter."} },

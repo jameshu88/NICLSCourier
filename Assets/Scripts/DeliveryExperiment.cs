@@ -442,6 +442,7 @@ public class DeliveryExperiment : CoroutineExperiment
             if (!Config.noSyncbox && !Config.freiburgSyncboxOn)
             {
                 syncs = GameObject.Find("SyncBox").GetComponent<Syncbox>();
+                syncs.Init();
                 syncs.StartPulse();
             }
         #endif

@@ -13,7 +13,7 @@ public class Syncbox : MonoBehaviour
     private FreiburgSyncbox freiburgSync;
     public ScriptedEventReporter scriptedInput = null;
 
-    public void Awake() {
+    public void Init() {
         upennSync = new UPennSyncbox(scriptedInput);
         freiburgSync = new FreiburgSyncbox(scriptedInput); 
 

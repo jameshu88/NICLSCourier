@@ -764,8 +764,12 @@ public class DeliveryExperiment : CoroutineExperiment
             if (Config.twoBtnEfrEnabled)
                 messages = messageImageDisplayer.recap_instruction_messages_efr_2btn_en;
             else
-                messages = EFR_COURIER ? messageImageDisplayer.hospital_recap_instruction_messages_en
-                                            : messageImageDisplayer.recap_instruction_messages_efr_en;
+                messages = EFR_COURIER ? 
+                           ( LanguageSource.current_language.Equals(LanguageSource.LANGUAGE.ENGLISH) ? 
+                             messageImageDisplayer.hospital_recap_instruction_messages_en :
+                             messageImageDisplayer.hospital_recap_instruction_messages_gr 
+                           )             
+                           : messageImageDisplayer.recap_instruction_messages_efr_en;
         else
             messages = messageImageDisplayer.recap_instruction_messages_fr_en;
 

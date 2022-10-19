@@ -165,12 +165,8 @@ public class BeginExperiment : MonoBehaviour
         foreach (string folder in existingSessionFolders)
         {
             if (folder.Substring(folder.LastIndexOf("_")+1).Equals(currentSessionNumber.ToString()))
-                // LC: auto-session completion feature
-                // currentSessionNumber += 1;
                 sessionExists = true;
         }
-        // LC: auto-session completion feature
-        // sessionInput.text = currentSessionNumber.ToString();
 
         if (!sessionExists)
         {

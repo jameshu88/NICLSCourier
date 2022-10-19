@@ -2155,8 +2155,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   languageStrings:
-  - Please enter a valid participant code
-  - "Bitte geben Sie eine g\xFCltige Probandennummer ein"
+  - Please enter a valid participant and session code
+  - " Bitte geben Sie einen g\xFCltigen Betreff und eine g\xFCltige Sitzungsnummer
+    ein"
 --- !u!1 &627864732
 GameObject:
   m_ObjectHideFlags: 0

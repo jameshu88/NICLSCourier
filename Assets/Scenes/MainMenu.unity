@@ -433,8 +433,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   languageStrings:
-  - 'Use Elemem:'
-  - 'Usen Elemem:'
+  - '     Elemem OL:'
+  - '     Elemem OL:'
 --- !u!114 &80979569
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4870,8 +4870,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   languageStrings:
-  - 'Use Nicls:'
-  - 'Usen Nicls:'
+  - '         Use Nicls:'
+  - '       Usen Nicls:'
 --- !u!114 &1383500998
 MonoBehaviour:
   m_ObjectHideFlags: 0

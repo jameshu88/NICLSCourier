@@ -64,7 +64,7 @@ public class MessageImageDisplayer : MonoBehaviour
         if (show_progress)
             progress.fillAmount -= (1f / progress_time) * Time.deltaTime;
 
-        if (progress.fillAmount == 0)
+        if (progress.fillAmount == 0 || InputManager.GetButtonDown("Secret"))
         {
             progress_bar.SetActive(false);
             show_progress = false;

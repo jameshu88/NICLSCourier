@@ -156,9 +156,11 @@ public class BeginExperiment : MonoBehaviour
 
         // LC: check for any existing sessions
         string dataPath = UnityEPL.GetParticipantFolder();
+        Debug.Log(dataPath);
         System.IO.Directory.CreateDirectory(dataPath);
 
         bool sessionExists = false;
+        bool isFirstSession = false;
         int currentSessionNumber = System.Int32.Parse(sessionInput.text);
         string[] existingSessionFolders = System.IO.Directory.GetDirectories(dataPath);
 
@@ -171,9 +173,27 @@ public class BeginExperiment : MonoBehaviour
         if (!sessionExists)
         {
             LockLanguage();
+            // LC: if current session is 0, check whether this is the actual "first" session
+            if (currentSessionNumber == 0)
+            {
+                Debug.Log("Session number is 0");
+                string defaultRoot = "";
+                if (Application.isEditor)
+                    defaultRoot = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
+                else
+                    defaultRoot = System.IO.Path.GetFullPath(".");
+                defaultRoot = System.IO.Path.Combine(defaultRoot, "data");
+                int numFolders = System.IO.Directory.GetDirectories(defaultRoot).Count();
+
+                // LC: hacky way of checking whether this is indeed the first session
+                isFirstSession = (numFolders == 2) ? true : false;
+                Debug.Log("Is it first session? " + isFirstSession);
+
+            }
+
             // TODO: JPB: Use NextSessionNumber()
             DeliveryExperiment.ConfigureExperiment(useRamulatorToggle.isOn, useNiclsToggle.isOn, useElememToggle.isOn,
-                                                UnityEPL.GetSessionNumber(), experiment_name);
+                                                UnityEPL.GetSessionNumber(), experiment_name, isFirstSession);
             Debug.Log("Ram On: " + useRamulatorToggle.isOn);
             Debug.Log("Nicls On: " + useNiclsToggle.isOn);
             Debug.Log("Elemem On: " + useElememToggle.isOn);

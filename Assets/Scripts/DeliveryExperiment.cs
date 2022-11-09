@@ -127,6 +127,7 @@ public class DeliveryExperiment : CoroutineExperiment
     private static bool useRamulator = false;
     private static bool useNiclServer = false;
     private static bool useElemem = false;
+    private static bool isFirstSession = false;
     #if !UNITY_WEBGL // Syncbox, Ramulator, and NICLS
         private Syncbox syncs;
         public RamulatorInterface ramulatorInterface;
@@ -323,13 +324,14 @@ public class DeliveryExperiment : CoroutineExperiment
         Sham
     }
     
-    public static void ConfigureExperiment(bool newUseRamulator, bool newUseNiclServer, bool newUseElemem, int newSessionNumber, string newExpName)
+    public static void ConfigureExperiment(bool newUseRamulator, bool newUseNiclServer, bool newUseElemem, int newSessionNumber, string newExpName, bool newFirstSession)
     {
         #if !UNITY_WEBGL // Ramulator and NICLS
             useRamulator = newUseRamulator;
             useNiclServer = newUseNiclServer;
             useElemem = newUseElemem;
             Config.elememStimMode = useElemem ? "open" : "none";
+            isFirstSession = newFirstSession;
         #endif // !UNITY_WEBGL
         sessionNumber = newSessionNumber;
         continuousSessionNumber = useNiclServer ? NICLS_READ_ONLY_SESSIONS + sessionNumber :
@@ -388,7 +390,7 @@ public class DeliveryExperiment : CoroutineExperiment
             UnityEPL.AddParticipant(System.Guid.NewGuid().ToString());
             UnityEPL.SetExperimentName("COURIER_ONLINE");
             UnityEPL.SetSessionNumber(0);
-            ConfigureExperiment(false, false, false, 0, "StandardCourier");
+            ConfigureExperiment(false, false, false, 0, "StandardCourier", true);
         }
 
         // if (DEBUG)
@@ -547,7 +549,7 @@ public class DeliveryExperiment : CoroutineExperiment
                     yield return DoTownLearning(1, environment.stores.Length);
                 }
             }
-            else if (EFR_COURIER)
+            else if (EFR_COURIER && isFirstSession)
             {
                 Debug.Log("Town Learning Phase");
                 trialsForFirstSubSession = Config.trialsPerSessionSingleTownLearning;
@@ -561,7 +563,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
         // Task Recap Instructions and Practice Trials
         // Using useNiclsServer to skip practices on closed loop sessions
-        if (sessionNumber == 0 && !useNiclServer && !COURIER_ONLINE)
+        if (sessionNumber == 0 && !useNiclServer && isFirstSession && !COURIER_ONLINE)
             yield return DoPracticeTrials(2);
 
         // Delay note
@@ -731,7 +733,8 @@ public class DeliveryExperiment : CoroutineExperiment
         }
         else if (EFR_COURIER)
         {
-            if (sessionNumber == 0)
+            // LC: only play intro video for the "first" session regardless of experiment type
+            if (sessionNumber == 0 && isFirstSession)
                 yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
                                     LanguageSource.GetLanguageString("standard intro video"),
                                     VideoSelector.VideoType.townlearningVideo);
@@ -955,12 +958,23 @@ public class DeliveryExperiment : CoroutineExperiment
             var rnd = new System.Random();
             stimStoresToVisit = StimStores.OrderBy(r => rnd.Next()).Take(deliveries/2).ToList();
             nostimStoresToVisit = noStimStores.OrderBy(r => rnd.Next()).Take(deliveries - deliveries/2).ToList();
+            // Debug.Log("STIM STORES:" + string.Join(" ", stimStoresToVisit));
+            // Debug.Log("NO STIM STORES:" + string.Join(" ", nostimStoresToVisit));
+
+            // From no stim stores, leave one store for the last delivery
+            List<StoreComponent> nostimStoresToVisit1 = nostimStoresToVisit.GetRange(0,6);
+            List<StoreComponent> nostimStoresToVisit2 = nostimStoresToVisit.GetRange(6,1);
+            // Debug.Log(string.Join(" ", nostimStoresToVisit1));
+            // Debug.Log(string.Join(" ", nostimStoresToVisit2));
 
             // now MERGE
             unvisitedStores = new List<StoreComponent>(stimStoresToVisit.Count + nostimStoresToVisit.Count);
             unvisitedStores.AddRange(stimStoresToVisit);
-            unvisitedStores.AddRange(nostimStoresToVisit);
+            unvisitedStores.AddRange(nostimStoresToVisit1);
             unvisitedStores.Shuffle();
+            // and add back the remaining 1 no stim store at the end
+            unvisitedStores.AddRange(nostimStoresToVisit2);
+            // Debug.Log("FINAL STORE LIST:" + string.Join(" ", unvisitedStores));
         }
         else
             unvisitedStores = new List<StoreComponent>(environment.stores);

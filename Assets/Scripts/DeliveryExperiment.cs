@@ -394,7 +394,7 @@ public class DeliveryExperiment : CoroutineExperiment
         }
 
         // if (DEBUG)
-        // ConfigureExperiment(false, false, true, 0, "EFRCourierReadOnly");
+        // ConfigureExperiment(false, false, true, 1, "EFRCourierReadOnly", false);
 
         // Session check
         if (sessionNumber == -1)
@@ -972,7 +972,6 @@ public class DeliveryExperiment : CoroutineExperiment
             unvisitedStores.AddRange(stimStoresToVisit);
             unvisitedStores.AddRange(nostimStoresToVisit1);
             unvisitedStores.Shuffle();
-            // and add back the remaining 1 no stim store at the end
             unvisitedStores.AddRange(nostimStoresToVisit2);
             // Debug.Log("FINAL STORE LIST:" + string.Join(" ", unvisitedStores));
         }
@@ -992,29 +991,37 @@ public class DeliveryExperiment : CoroutineExperiment
             Debug.Log("This Trial is using " + stimTag + " as stim frequency");
         }
 
+        StoreComponent lastStoreToVisit = null;
+        StoreComponent nextStore = null;
+
+        // LC: For EFRCourier, last delivery store should be no stim store to ensure we have 6 stim events happening.
+        //     Thus, we pre-select the last no stim store and save it for later. 
+        if (EFR_COURIER && !practice)
+        {
+            lastStoreToVisit = unvisitedStores[^1];
+            unvisitedStores.Remove(lastStoreToVisit);
+        }
+
         for (int i = 0; i < deliveries; i++)
         {
-
-            // LC: save the lastly visited store for next trial
-            //     there is a bug where the algorithm picks next store to be the one that you just visited on last trial
-            //     manually store & remove the store and add it back after choosing the first store for subsequent trials
-            if (i == 0)
+            // LC: for last delivery, use no stim store. 
+            if (EFR_COURIER && !practice)
             {
-                if (previousTrialStore != null)
-                    unvisitedStores.Remove(previousTrialStore);
+                if (i != deliveries - 1)
+                {
+                    nextStore = PickNextStore(unvisitedStores);
+                    unvisitedStores.Remove(nextStore);
+                }
+                else
+                    nextStore = lastStoreToVisit;
+                thisTrialPresentedStores.Add(nextStore);
             }
-            StoreComponent nextStore = PickNextStore(unvisitedStores);
-            unvisitedStores.Remove(nextStore);
-            thisTrialPresentedStores.Add(nextStore);
-            if (i == 0)
+            else
             {
-                if (previousTrialStore != null)
-                    unvisitedStores.Add(previousTrialStore);
+                nextStore = PickNextStore(unvisitedStores);
+                unvisitedStores.Remove(nextStore);
+                thisTrialPresentedStores.Add(nextStore);
             }
-
-            // LC: keep the lastly visited store for next delivery day
-            if (i == deliveries-1)
-                previousTrialStore = nextStore;
 
             playerMovement.Freeze();
             EnablePlayerTransfromReporting(false);

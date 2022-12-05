@@ -168,6 +168,7 @@ public class BeginExperiment : MonoBehaviour
         {
             if (folder.Substring(folder.LastIndexOf("_")+1).Equals(currentSessionNumber.ToString()))
                 sessionExists = true;
+                // Debug.Log("Session Exists. Re-enter session number");
         }
 
         if (!sessionExists)
@@ -176,19 +177,26 @@ public class BeginExperiment : MonoBehaviour
             // LC: if current session is 0, check whether this is the actual "first" session
             if (currentSessionNumber == 0)
             {
-                Debug.Log("Session number is 0");
+                // Debug.Log("Session number is 0");
                 string defaultRoot = "";
                 if (Application.isEditor)
                     defaultRoot = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
                 else
                     defaultRoot = System.IO.Path.GetFullPath(".");
                 defaultRoot = System.IO.Path.Combine(defaultRoot, "data");
-                int numFolders = System.IO.Directory.GetDirectories(defaultRoot).Count();
+                string[] folders = System.IO.Directory.GetDirectories(defaultRoot);
 
-                // LC: hacky way of checking whether this is indeed the first session
-                isFirstSession = (numFolders == 2) ? true : false;
-                Debug.Log("Is it first session? " + isFirstSession);
+                // LC: check if there is another session 0 folder
+                string otherExperimentName = useElememToggle.isOn ? "EFRCourierReadOnly" : "EFRCourierOpenLoop";
+                string otherDirectory = System.IO.Path.Combine(defaultRoot, otherExperimentName);
+                otherDirectory = System.IO.Path.Combine(otherDirectory, string.Join("", UnityEPL.GetParticipants()));
+                otherDirectory = System.IO.Path.Combine(otherDirectory, "session_" + currentSessionNumber.ToString());
+                // Debug.Log("OTHER: " + otherDirectory);
 
+                if (System.IO.Directory.Exists(otherDirectory))
+                    isFirstSession = false;
+                else
+                    isFirstSession = true;
             }
 
             // TODO: JPB: Use NextSessionNumber()
@@ -197,6 +205,7 @@ public class BeginExperiment : MonoBehaviour
             Debug.Log("Ram On: " + useRamulatorToggle.isOn);
             Debug.Log("Nicls On: " + useNiclsToggle.isOn);
             Debug.Log("Elemem On: " + useElememToggle.isOn);
+            Debug.Log("First session: " + isFirstSession.ToString());
             SceneManager.LoadScene(scene_name);
         }
         else

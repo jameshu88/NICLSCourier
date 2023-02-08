@@ -23,7 +23,7 @@ public abstract class IHostPCSyncbox : EventLoop
     public abstract void SendMessageInternal(string type, Dictionary<string, object> data);
 }
 
-#if true//!UNITY_WEBGL // FreiburgSyncbox
+#if !UNITY_WEBGL // FreiburgSyncbox
 
 public class FreiburgSyncboxListener {
     FreiburgSyncboxInterfaceHelper FreiburgSyncboxInterfaceHelper;

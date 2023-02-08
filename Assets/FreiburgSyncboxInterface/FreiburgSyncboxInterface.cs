@@ -23,7 +23,7 @@ public abstract class IHostPCSyncbox : EventLoop
     public abstract void SendMessageInternal(string type, Dictionary<string, object> data);
 }
 
-#if !UNITY_WEBGL // FreiburgSyncbox
+#if true//!UNITY_WEBGL // FreiburgSyncbox
 
 public class FreiburgSyncboxListener {
     FreiburgSyncboxInterfaceHelper FreiburgSyncboxInterfaceHelper;
@@ -127,7 +127,7 @@ public class FreiburgSyncboxInterfaceHelper : IHostPCSyncbox
 
     private bool interfaceDisabled = true;
 
-    public FreiburgSyncboxInterfaceHelper(ScriptedEventReporter _scriptedEventReporter, bool _interfaceDisabled, int port) {
+    public FreiburgSyncboxInterfaceHelper(ScriptedEventReporter _scriptedEventReporter, bool _interfaceDisabled, string ip, int port, string stimMode, string[] stimTags = null) {
         //im = _im;
 
         interfaceDisabled = _interfaceDisabled;
@@ -137,7 +137,7 @@ public class FreiburgSyncboxInterfaceHelper : IHostPCSyncbox
         listener = new FreiburgSyncboxListener(this);
         Start();
         StartLoop();
-        Connect("127.0.0.1", port, "");
+        Connect(ip, port, stimMode, stimTags);
         //Do(new EventBase(Connect));
     }
 
@@ -372,7 +372,7 @@ public class FreiburgSyncboxInterface : MonoBehaviour
     //This will be used to log messages
     public ScriptedEventReporter scriptedEventReporter;
 
-    public FreiburgSyncboxInterfaceHelper FreiburgSyncboxInterfaceHelper = null;
+    public FreiburgSyncboxInterfaceHelper freiburgSyncboxInterfaceHelper = null;
 
     private int switchCount = 0;
     public List<string> stimTags = null;
@@ -381,7 +381,7 @@ public class FreiburgSyncboxInterface : MonoBehaviour
     public IEnumerator BeginNewSession(bool disableInterface, int port)
     {
         yield return null;
-        FreiburgSyncboxInterfaceHelper = new FreiburgSyncboxInterfaceHelper(scriptedEventReporter, disableInterface, port);
+        freiburgSyncboxInterfaceHelper = new FreiburgSyncboxInterfaceHelper(scriptedEventReporter, disableInterface, "127.0.0.1", port, Config.elememStimMode);
         if (!disableInterface)
             UnityEngine.Debug.Log("Started FreiburgSyncbox Interface");
     }

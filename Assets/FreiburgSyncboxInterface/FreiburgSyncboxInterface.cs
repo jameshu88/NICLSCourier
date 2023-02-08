@@ -114,6 +114,10 @@ public class FreiburgSyncboxListener {
 // message in the queue and some blocking wait in the EventLoop thread
 public class FreiburgSyncboxInterfaceHelper : IHostPCSyncbox
 {
+
+    private const int TIME_BETWEEN_PULSES_MIN = 800;
+    private const int TIME_BETWEEN_PULSES_MAX = 1200;
+
     //public InterfaceManager im;
 
     int messageTimeout = 3000;
@@ -126,6 +130,8 @@ public class FreiburgSyncboxInterfaceHelper : IHostPCSyncbox
     private ScriptedEventReporter scriptedEventReporter;
 
     private bool interfaceDisabled = true;
+
+    private System.Random rng = new System.Random();
 
     public FreiburgSyncboxInterfaceHelper(ScriptedEventReporter _scriptedEventReporter, bool _interfaceDisabled, string ip, int port, string stimMode, string[] stimTags = null) {
         //im = _im;
@@ -190,7 +196,13 @@ public class FreiburgSyncboxInterfaceHelper : IHostPCSyncbox
         // excepts if there's an issue with latency, else returns
         DoLatencyCheck();
 
-        DoRepeating(new RepeatingEvent(new EventBase(SyncPulse), -1, 0, 1000));
+        Do(new EventBase(SyncPulseForever));
+    }
+
+    private void SyncPulseForever() {
+        int timeBetweenPulses = (int)(TIME_BETWEEN_PULSES_MIN + (int)(rng.NextDouble() * (TIME_BETWEEN_PULSES_MAX - TIME_BETWEEN_PULSES_MIN)));
+        SyncPulse();
+        DoIn(new EventBase(SyncPulseForever), timeBetweenPulses);
     }
 
     private void DoLatencyCheck() {

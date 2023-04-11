@@ -50,9 +50,9 @@ public class DeliveryExperiment : CoroutineExperiment
     // TODO: JPB: Make these configuration variables
 
     // Experiment type
-    private const bool EFR_COURIER = true;
+    private const bool EFR_COURIER = false;
     private const bool NICLS_COURIER = false;
-    private const bool VALUE_COURIER = false;
+    private const bool VALUE_COURIER = true;
     #if !UNITY_WEBGL
         private const bool COURIER_ONLINE = false;
     #else
@@ -63,7 +63,7 @@ public class DeliveryExperiment : CoroutineExperiment
     private const bool skipFPS = true;
     
     private const string COURIER_VERSION = "v6.0.4";
-    private const bool DEBUG = false;
+    private const bool DEBUG = true;
 
     private const string RECALL_TEXT = "*******"; // TODO: JPB: Remove this and use display system
     // Constants moved to the Config File
@@ -77,7 +77,7 @@ public class DeliveryExperiment : CoroutineExperiment
     private const int HOSPTIAL_TOWN_LEARNING_NUM_STORES = 8;
     private const int SINGLE_TOWN_LEARNING_SESSIONS = 1;
     private const int DOUBLE_TOWN_LEARNING_SESSIONS = 0;
-    private const int POINTING_INDICATOR_DELAY = NICLS_COURIER ? 12 : 48;
+    private const int POINTING_INDICATOR_DELAY = NICLS_COURIER ? 12 : COURIER_ONLINE ? 12 : 48;
     private const int EFR_KEYPRESS_PRACTICES = 10;
     private const float FRAME_TEST_LENGTH = 20f;
     private const float MIN_FAMILIARIZATION_ISI = 0.4f;
@@ -85,7 +85,7 @@ public class DeliveryExperiment : CoroutineExperiment
     private const float FAMILIARIZATION_PRESENTATION_LENGTH = 1.5f;
     private const float RECALL_MESSAGE_DISPLAY_LENGTH = 6f;
     private const float RECALL_TEXT_DISPLAY_LENGTH = 1f;
-    private const float FREE_RECALL_LENGTH = DEBUG ? 90f : 90f;
+    private const float FREE_RECALL_LENGTH = DEBUG ? 10f : 90f;
     private const float VALUE_RECALL_LENGTH = 10f;
     private const float PRACTICE_FREE_RECALL_LENGTH = 25f;
     private const float STORE_FINAL_RECALL_LENGTH = 90f;
@@ -189,9 +189,11 @@ public class DeliveryExperiment : CoroutineExperiment
     private List<int> fpsList = new List<int>();
 
     // Store Generation variables
-    public bool[] freeTaskFirst;
+    public bool[] freeTaskFirst; 
     int freeIndex = 0;
     int valueIndex = 0;
+    int number_input;
+    List<List<StoreComponent>> storeLists;
 
     // Stim / No Stim Stores Lists
     public List<StoreComponent> StimStores = new List<StoreComponent>();
@@ -277,10 +279,10 @@ public class DeliveryExperiment : CoroutineExperiment
         return storePoints;
     }
 
-    void SpatialStorePoints(StoreComponent[] stores)
+    double[] SpatialStorePoints(List<StoreComponent> stores)
     {
         // Setup covariance matrix variables
-        int N = stores.Length;
+        int N = stores.Count;
         double[] mu = Vector.Zeros(N);
         double[,] K = Matrix.Zeros(N, N);
         double rhoSq = N;
@@ -291,8 +293,8 @@ public class DeliveryExperiment : CoroutineExperiment
             K[i, i] = 1;
             for (int j = i + 1; j < N; j++)
             {
-                var a = new double[2] { stores[i].transform.position.x, stores[i].transform.position.y };
-                var b = new double[2] { stores[j].transform.position.x, stores[j].transform.position.y };
+                var a = new double[2] { stores[i].transform.position.x, stores[i].transform.position.z };
+                var b = new double[2] { stores[j].transform.position.x, stores[j].transform.position.z };
                 K[i, j] = Math.Exp(-(1d / (2d * rhoSq)) * Distance.Euclidean(a, b));
                 K[j, i] = K[i, j];
             }
@@ -313,6 +315,199 @@ public class DeliveryExperiment : CoroutineExperiment
         // Set store object point values
         for (int i = 0; i < N; i++)
             stores[i].points = storePoints[i];
+
+        return storePoints;
+    }
+
+    // LC: this is maually selected store lists that are visible from given store location
+    //     need to update this dictionary manually when the town layout changes
+    private Dictionary<string, List<string>> storeDict = new Dictionary<string, List<string>>()
+    {
+        { "gym", new List<string>{ "bakery", "hardware_store", "craft_shop", "dentist"} },
+        { "craft_shop", new List<string>{ "gym", "hardware_store", "dentist", "cafe" } },
+        { "hardware_store", new List<string>{ "toy_store", "barber_shop", "clothing_store", "gym", "craft_shop" } },
+        { "clothing_store", new List<string>{ "barber_shop", "toy_store", "pharmacy", "hardware_store", "jewelry_store", "craft_shop" } },
+        { "jewelry_store", new List<string>{ "pharmacy", "toy_store", "clothing_store" } },
+        { "pharmacy", new List<string>{ "bakery", "jewerly_store", "clothing_store", "toy_store" } },
+        { "bakery", new List<string>{ "pharmacy", "gym", "pet_store" } },
+        { "pet_store", new List<string>{ "gym", "bakery" } },
+        { "music_store", new List<string>{ "pizzeria", "florist", "dentist", "pet_store" } },
+        { "florist", new List<string>{ "dentist", "pizzeria", "music_store" } },
+        { "pizzeria", new List<string>{ "music_store", "florist", "dentist" } },
+        { "dentist", new List<string>{ "cafe", "grocery_store", "craft_shop", "florist", "music_store", "pizzeria", "gym" } },
+        { "grocery_store", new List<string>{ "cafe", "dentist", "craft_shop", "dentist" } },
+        { "cafe", new List<string>{ "bike_shop", "grocery_store", "craft_shop", "dentist" } },
+        { "bike_shop", new List<string>{ "grocery_store", "cafe", "clothing_store", "barber_shop", "jewerly_store" } },
+        { "barber_shop", new List<string>{ "toy_store", "jewelry_store", "hardware_store", "grocery_store", "bike_shop" } },
+        { "toy_store", new List<string>{ "pharmacy", "jewelry_store", "clothing_store", "barber_shop", "grocery_store", "bike_shop", "craft_shop" } }
+    };
+
+    // LC: this function pre-generates the list of stores to visit in a trial
+    private Tuple<bool, List<StoreComponent>> getTrialStores(Environment environment, int num_deliveries)
+    {
+        List<StoreComponent> this_trial_presented_stores = new List<StoreComponent>();
+        List<StoreComponent> unvisitedStores = new List<StoreComponent>(environment.stores);
+        StoreComponent nextStore = null;
+        bool success = true;
+
+        // pick random store first
+        int random_store_index = -1;
+        int tries = 0;
+        do
+        {
+            tries++;
+            random_store_index = UnityEngine.Random.Range(0, unvisitedStores.Count);
+            nextStore = unvisitedStores[random_store_index];
+        }
+        while (nextStore.IsVisible() && tries < 17);
+        unvisitedStores.RemoveAt(random_store_index);
+        this_trial_presented_stores.Add(nextStore);
+
+        // then for the remaining stores, pick as such
+        for (int i = 1; i < num_deliveries; i++)
+        {
+            // find the lastly visited store
+            StoreComponent prevStore = this_trial_presented_stores.Last();
+            string prevStoreName = prevStore.gameObject.name;
+
+            // get the list of stores that are visible from this store
+            List<string> visibleStores = storeDict[prevStoreName];
+            List<StoreComponent> candidateStores = new List<StoreComponent>();
+
+            // now loop through the remaining unvisited stores and find candidates
+            foreach (StoreComponent store in unvisitedStores)
+            {
+                if (!visibleStores.Contains(store.gameObject.name))
+                {
+                    candidateStores.Add(store);
+                }
+            }
+
+            // if there is/are candidate store(s)...
+            if (candidateStores.Count > 0)
+            {
+                // pick randomly from candidate store list
+                random_store_index = UnityEngine.Random.Range(0, candidateStores.Count);
+                nextStore = candidateStores[random_store_index];
+            }
+            else
+            {
+                // pick randomly from uunvisited store list
+                random_store_index = UnityEngine.Random.Range(0, unvisitedStores.Count);
+                nextStore = unvisitedStores[random_store_index];
+                success = false;
+            }
+
+            // remove / add appropriately
+            unvisitedStores.Remove(nextStore);
+            this_trial_presented_stores.Add(nextStore);
+        }
+
+        Tuple<bool, List<StoreComponent>> result = new Tuple<bool, List<StoreComponent>>
+                                                            (success, this_trial_presented_stores);
+        return result;
+    }
+
+    private List<List<StoreComponent>> listGenerator(Environment environment, int num_deliveries)
+    {
+        List<List<StoreComponent>> total = new List<List<StoreComponent>>();
+        int num_total = 20;
+        while (total.Count < num_total)
+        {
+            Tuple<bool, List<StoreComponent>> list = getTrialStores(environment, num_deliveries);
+            if (list.Item1)
+                total.Add(list.Item2);
+        }
+        return total;
+    }
+
+    private bool listCheck(List<StoreComponent> list1, List<StoreComponent> list2) //, Dictionary<string, List<string>> dict)
+    {
+        bool result = true;
+        
+        // initialize a dictionary with all the transitions in the sequence
+        Dictionary<StoreComponent, StoreComponent> listDict = new Dictionary<StoreComponent, StoreComponent>();
+        for (int i=0; i < list1.Count-1; i++)
+        {
+            listDict.Add(list1[i], list1[i+1]);
+        }
+
+        // now check and see if there is repetitive transition
+        for (int i=0; i < list2.Count-1; i++)
+        {
+            if(listDict.ContainsKey(list2[i]))
+            {
+                StoreComponent prevNext = listDict[list2[i]];
+                StoreComponent currNext = list2[i+1];
+
+                if (prevNext == currNext)
+                {
+                    result = false;
+                    break;
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    private List<List<StoreComponent>> getTotalList(Environment environment, int num_trials, int num_deliveries)
+    {
+        List<List<StoreComponent>> new_total = new List<List<StoreComponent>>();
+        bool success = false;
+
+        while (!success)
+        {
+            List<List<StoreComponent>> total = listGenerator(environment, num_deliveries);
+            new_total = new List<List<StoreComponent>>();
+            new_total.Add(total[0]);
+            total.Remove(total[0]);
+
+            Dictionary<StoreComponent, List<StoreComponent>> transDict = new Dictionary<StoreComponent, List<StoreComponent>>();
+            List<StoreComponent> firstList = new_total[0];
+            for (int i=0; i < firstList.Count-1; i++)
+            {
+                transDict.Add(firstList[i], new List<StoreComponent>{firstList[i+1]});
+            }
+
+            for (int i=0; i < total.Count; i++)
+            {
+                List<StoreComponent> prevList = new_total.Last();
+                List<StoreComponent> currList = total[i];
+                bool isGood = listCheck(prevList, currList);
+
+                if (isGood)
+                {
+                    int cumCount = 0;
+                    for (int j=0; j < currList.Count-1; j++)
+                    {
+                        StoreComponent currStore = currList[j];
+                        StoreComponent nextStore = currList[j+1];
+                        if (transDict.ContainsKey(currStore))
+                        {
+                            List<StoreComponent> values = transDict[currStore];
+                            if (values.Contains(nextStore))
+                                cumCount += 1;
+                        }
+                    }
+
+                    if (cumCount < 1)
+                    {
+                        new_total.Add(currList);
+                        for (int k=0; k < currList.Count-1; k++)
+                            transDict.AddOrUpdateKey(currList[k], currList[k+1]);
+                    }
+                }
+
+                if (new_total.Count == num_trials)
+                {
+                    success = true;
+                    break;
+                }
+            }
+        }
+
+        return new_total;
     }
 
     // These names are used in for what is sent to the log
@@ -390,7 +585,7 @@ public class DeliveryExperiment : CoroutineExperiment
             UnityEPL.AddParticipant(System.Guid.NewGuid().ToString());
             UnityEPL.SetExperimentName("COURIER_ONLINE");
             UnityEPL.SetSessionNumber(0);
-            ConfigureExperiment(false, false, false, 0, "StandardCourier", true);
+            ConfigureExperiment(false, false, false, 0, "ValueCourier", true);
         }
 
         // if (DEBUG)
@@ -409,17 +604,17 @@ public class DeliveryExperiment : CoroutineExperiment
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.SetCursor(new Texture2D(0, 0), new Vector2(0, 0), CursorMode.ForceSoftware);
 
-        // Player controls
-        string controlName = "DrivingControls.xml";
-        if (Config.Get(() => Config.singleStickController, false))
-            controlName = "SingleStick" + controlName;
-        else
-            controlName = "Split" + controlName;
-
-        if (Config.Get(() => Config.ps4Controller, false))
-            controlName = "Ps4" + controlName;
-
         #if !UNITY_WEBGL // System.IO
+            // Player controls
+            string controlName = "DrivingControls.xml";
+            if (Config.Get(() => Config.singleStickController, false))
+                controlName = "SingleStick" + controlName;
+            else
+                controlName = "Split" + controlName;
+
+            if (Config.Get(() => Config.ps4Controller, false))
+                controlName = "Ps4" + controlName;
+
             string configPath = System.IO.Path.Combine(
                 Directory.GetParent(Directory.GetParent(UnityEPL.GetParticipantFolder()).FullName).FullName,
                 "configs");
@@ -504,6 +699,10 @@ public class DeliveryExperiment : CoroutineExperiment
 
         // Setup Environment
         yield return EnableEnvironment();
+
+        // LC: Courier Online store list generator
+        if (COURIER_ONLINE && VALUE_COURIER)
+            storeLists = getTotalList(environment, Config.trialsPerSession, Config.deliveriesPerTrial);
 
         // set stim/no_stim stores unique for each subject
         var reliableRandom = deliveryItems.ReliableRandom();
@@ -647,10 +846,8 @@ public class DeliveryExperiment : CoroutineExperiment
 
         // Final Recalls
         BlackScreen();
-        if (!VALUE_COURIER)
-        {
-            yield return DoFinalRecall(subSessionNum);
-        }
+        yield return DoFinalRecall(subSessionNum);
+        
     }
 
     private IEnumerator DoFrameTest()
@@ -745,9 +942,10 @@ public class DeliveryExperiment : CoroutineExperiment
         }
         else
         {
-            yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
-                                LanguageSource.GetLanguageString("standard intro video"),
-                                VideoSelector.VideoType.valueIntro);
+            // yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
+            //                     LanguageSource.GetLanguageString("standard intro video"),
+            //                     VideoSelector.VideoType.valueIntro);
+            yield return DoRecapInstructions(recap: true);
         }
 
         #if !UNITY_WEBGL // Microphone
@@ -774,7 +972,9 @@ public class DeliveryExperiment : CoroutineExperiment
                            )             
                            : messageImageDisplayer.recap_instruction_messages_efr_en;
         else
-            messages = messageImageDisplayer.recap_instruction_messages_fr_en;
+            messages = VALUE_COURIER ? 
+                          messageImageDisplayer.online_value_instruction_messages_en
+                        : messageImageDisplayer.recap_instruction_messages_fr_en;
 
         // LC: if you want them to go back and forth...?
         if (recap)
@@ -926,27 +1126,70 @@ public class DeliveryExperiment : CoroutineExperiment
         //     so, we need to add slight delay for the camera to "see" the stores in town
         yield return new WaitForSeconds(0.1f);
 
+        int deliveries = practice ? Config.deliveriesPerPracticeTrial : Config.deliveriesPerTrial;
+        Debug.Log(deliveries.ToString());
+
         // Set store points for the delivery day
+        List<StoreComponent> curStoreList = storeLists[trialNumber];
+        string storenames = "";
+        foreach (StoreComponent store in curStoreList) 
+        {
+            storenames += store.GetStoreName() + ", ";
+        }
+        Debug.Log(storenames);
+
         double[] allStoresPoints = null;
+        bool containsNegative = false;
         switch(storePointType)
         {
             case StorePointType.Random:
-                allStoresPoints = RandomStorePoints(environment.stores.Length);
+                allStoresPoints = RandomStorePoints(deliveries-1);
+                containsNegative = allStoresPoints.Any(n => n < 0);
+                while (containsNegative)
+                {
+                    Debug.Log("Oops, negative values here");
+                    allStoresPoints = RandomStorePoints(deliveries-1);
+                    containsNegative = allStoresPoints.Any(n => n < 0);
+                }
+                Debug.Log("No negatives now");
                 break;
             case StorePointType.SerialPosition:
-                allStoresPoints = TemporalStorePoints(environment.stores.Length);
+                allStoresPoints = TemporalStorePoints(deliveries-1);
+                containsNegative = allStoresPoints.Any(n => n < 0);
+                while (containsNegative)
+                {
+                    Debug.Log("Oops, negative values here");
+                    allStoresPoints = TemporalStorePoints(deliveries-1);
+                    containsNegative = allStoresPoints.Any(n => n < 0);
+                }
+                Debug.Log("No negatives now");
                 break;
             case StorePointType.SpatialPosition:
-                SpatialStorePoints(environment.stores);
+                allStoresPoints = SpatialStorePoints(curStoreList.GetRange(0, deliveries-1));
+                containsNegative = allStoresPoints.Any(n => n < 0);
+                while (containsNegative)
+                {
+                    Debug.Log("Oops, negative values here");
+                    allStoresPoints = SpatialStorePoints(curStoreList.GetRange(0, deliveries-1));
+                    containsNegative = allStoresPoints.Any(n => n < 0);
+                }
+                Debug.Log("No negatives now");
                 break;
         }
+
+        Debug.Log(storePointType);
+        string pointvalues = "";
+        foreach (double point in allStoresPoints)
+        {
+            pointvalues += point.ToString() + ", ";
+        }
+        Debug.Log(pointvalues);
 
         SetRamulatorState("ENCODING", true, new Dictionary<string, object>());
         SetElememState(ElememStateMsg.ENCODING);
 
         messageImageDisplayer.please_find_the_blah_reminder.SetActive(true);
 
-        int deliveries = practice ? Config.deliveriesPerPracticeTrial : Config.deliveriesPerTrial;
         int craft_shop_delivery_num = rng.Next(deliveries - 1);
         List<StoreComponent> unvisitedStores = null;
         List<StoreComponent> stimStoresToVisit = null;
@@ -1004,6 +1247,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
         for (int i = 0; i < deliveries; i++)
         {
+            Debug.Log("Deliver #" + i.ToString());
             // LC: for last delivery, use no stim store. 
             if (EFR_COURIER && !practice)
             {
@@ -1015,6 +1259,10 @@ public class DeliveryExperiment : CoroutineExperiment
                 else
                     nextStore = lastStoreToVisit;
                 thisTrialPresentedStores.Add(nextStore);
+            }
+            else if (VALUE_COURIER)
+            {
+                nextStore = curStoreList[i];
             }
             else
             {
@@ -1028,7 +1276,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
             messageImageDisplayer.please_find_the_blah_reminder.SetActive(false);
             messageImageDisplayer.SetReminderText(nextStore.GetStoreName());
-            if (!NICLS_COURIER)
+            if (!NICLS_COURIER && !VALUE_COURIER)
                 yield return DoPointingTask(nextStore);
             messageImageDisplayer.please_find_the_blah_reminder.SetActive(true);
             playerMovement.Unfreeze();
@@ -1070,7 +1318,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 float wordDelay = 0f;
 
                 bool isStimStore = StimStores.Contains(nextStore);
-                Debug.Log("is this stim store? " + isStimStore.ToString());
+                // Debug.Log("is this stim store? " + isStimStore.ToString());
 
                 #if !UNITY_WEBGL 
                     // NICLS
@@ -1132,6 +1380,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
                 //add visuals with sound
                 messageImageDisplayer.deliver_item_visual_dislay.SetActive(true);
+                Debug.Log(deliveredItemNameWithSpace);
                 messageImageDisplayer.SetDeliverItemText(deliveredItemNameWithSpace);
                 yield return SkippableWait(AUDIO_TEXT_DISPLAY);
                 messageImageDisplayer.deliver_item_visual_dislay.SetActive(false);
@@ -1141,14 +1390,14 @@ public class DeliveryExperiment : CoroutineExperiment
                 scriptedEventReporter.ReportScriptedEvent("audio presentation finished",
                                                           new Dictionary<string, object>());
 
+                // LC: complete full 3 second interval
                 if (EFR_COURIER)
                 {
-                    // LC: complete full 3 second interval
                     float restDelay = WORD_PRESENTATION_TOTAL_TIME - wordDelay - AUDIO_TEXT_DISPLAY;
                     yield return new WaitForSeconds(restDelay);
-                    playerMovement.Unfreeze();
-                    EnablePlayerTransfromReporting(true);
                 }
+                playerMovement.Unfreeze();
+                EnablePlayerTransfromReporting(true);
             }
         }
 
@@ -1314,7 +1563,7 @@ public class DeliveryExperiment : CoroutineExperiment
         List<string> stimTagLists = GenerateStimTags(numTrials);
 
         // create a condition list for each task
-        freeList.Shuffle(new System.Random(UnityEPL.GetParticipants()[0].GetHashCode()));
+        freeList.Shuffle(new System.Random());
         valueList.Shuffle(new System.Random());
 
         for (int trialNumber = 0; trialNumber < numTrials; trialNumber++)
@@ -1339,7 +1588,7 @@ public class DeliveryExperiment : CoroutineExperiment
             if (!DeliveryItems.ItemsExhausted())
             {
                 BlackScreen();
-                if (trialNumber > 0)
+                if (trialNumber > 0 && !VALUE_COURIER)
                 {
                     if (NICLS_COURIER)
                         messageImageDisplayer.SetGeneralBigMessageText(mainText: "next day");
@@ -1463,6 +1712,8 @@ public class DeliveryExperiment : CoroutineExperiment
         // }
         scriptedEventReporter.ReportScriptedEvent("start " + taskType + " typing", taskTypeData);
 
+        // activate progress bar
+        messageImageDisplayer.DoProgressDisplay(true, taskLength);
         // during the duration of the task...
         while (Time.time < taskStart + taskLength)
         {
@@ -1471,6 +1722,7 @@ public class DeliveryExperiment : CoroutineExperiment
             // activate the input text UI
             inputObject.SetActive(true);
             inputField.ActivateInputField();
+
 
             if ((Input.anyKeyDown) && (taskType == "cued recall"))
             {
@@ -1502,6 +1754,7 @@ public class DeliveryExperiment : CoroutineExperiment
                         inputField.Select();
                         inputField.text = "";
                         inputObject.SetActive(false);
+                        messageImageDisplayer.DoProgressDisplay(false, taskLength);
                         yield break;
                     }
                     // tasks other than value guess should have word response
@@ -1542,6 +1795,7 @@ public class DeliveryExperiment : CoroutineExperiment
                         if (taskType == "cued recall")
                         {
                             inputObject.SetActive(false);
+                            messageImageDisplayer.DoProgressDisplay(false, taskLength);
                             yield break;
                         }
                     }
@@ -1555,6 +1809,8 @@ public class DeliveryExperiment : CoroutineExperiment
         inputField.Select();
         inputField.text = "";
         inputObject.SetActive(false);
+        // turn off progress bar
+        messageImageDisplayer.DoProgressDisplay(false, taskLength);
         freeRecallWrongType.SetActive(false);
         valueGuessWrongType.SetActive(false);
     }
@@ -1908,22 +2164,26 @@ public class DeliveryExperiment : CoroutineExperiment
             SetRamulatorState("RETRIEVAL", false, new Dictionary<string, object>());
             scriptedEventReporter.ReportScriptedEvent("stop final recall");
         #else
-            messageImageDisplayer.SetGeneralBigMessageText("final store recall title", "final store recall main");
-            yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
 
-            highBeep.Play();
-            scriptedEventReporter.ReportScriptedEvent("Sound played", new Dictionary<string, object>() { { "sound name", "high beep" }, { "sound duration", highBeep.clip.length.ToString() } });
+            if (!VALUE_COURIER)
+            {
+                messageImageDisplayer.SetGeneralBigMessageText("final store recall title", "final store recall main");
+                yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
 
-            scriptedEventReporter.ReportScriptedEvent("final store recall start", new Dictionary<string, object>());
-            placeHolder.text = LanguageSource.GetLanguageString("final store recall text");
-            yield return DoTypedResponses(-999, "final store recall", STORE_FINAL_RECALL_LENGTH, freeInputField, freeResponse);
+                highBeep.Play();
+                scriptedEventReporter.ReportScriptedEvent("Sound played", new Dictionary<string, object>() { { "sound name", "high beep" }, { "sound duration", highBeep.clip.length.ToString() } });
 
-            lowBeep.Play();
-            scriptedEventReporter.ReportScriptedEvent("Sound played", new Dictionary<string, object>() { { "sound name", "low beep" }, 
-                                                                                                        { "sound duration", lowBeep.clip.length.ToString() } });
-            scriptedEventReporter.ReportScriptedEvent("final store recall stop", new Dictionary<string, object>());
+                scriptedEventReporter.ReportScriptedEvent("final store recall start", new Dictionary<string, object>());
+                placeHolder.text = LanguageSource.GetLanguageString("final store recall text");
+                yield return DoTypedResponses(-999, "final store recall", STORE_FINAL_RECALL_LENGTH, freeInputField, freeResponse);
 
-            yield return SkippableWait(TIME_BETWEEN_DIFFERENT_RECALL_PHASES);
+                lowBeep.Play();
+                scriptedEventReporter.ReportScriptedEvent("Sound played", new Dictionary<string, object>() { { "sound name", "low beep" }, 
+                                                                                                            { "sound duration", lowBeep.clip.length.ToString() } });
+                scriptedEventReporter.ReportScriptedEvent("final store recall stop", new Dictionary<string, object>());
+
+                yield return SkippableWait(TIME_BETWEEN_DIFFERENT_RECALL_PHASES);
+            }
 
             messageImageDisplayer.SetGeneralBigMessageText("final object recall title", "final object recall main");
             yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
@@ -1933,7 +2193,9 @@ public class DeliveryExperiment : CoroutineExperiment
 
             scriptedEventReporter.ReportScriptedEvent("final object recall start", new Dictionary<string, object>());
             placeHolder.text = LanguageSource.GetLanguageString("final object recall text");
-            yield return DoTypedResponses(-999, "final object recall", STORE_FINAL_RECALL_LENGTH, freeInputField, freeResponse);
+            messageImageDisplayer.DoProgressDisplay(true, OBJECT_FINAL_RECALL_LENGTH);
+            yield return DoTypedResponses(-999, "final object recall", OBJECT_FINAL_RECALL_LENGTH, freeInputField, freeResponse);
+            messageImageDisplayer.DoProgressDisplay(true, OBJECT_FINAL_RECALL_LENGTH);
 
             lowBeep.Play();
             scriptedEventReporter.ReportScriptedEvent("Sound played", new Dictionary<string, object>() { { "sound name", "low beep" }, 
@@ -2243,6 +2505,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 messageImageDisplayer.DoProgressDisplay(true, MAX_CUED_RECALL_TIME_PER_STORE);
                 yield return messageImageDisplayer.DisplayMessageFunction(store.familiarization_object, func);
                 messageImageDisplayer.cued_recall_message.SetActive(false);
+                messageImageDisplayer.DoProgressDisplay(false, MAX_CUED_RECALL_TIME_PER_STORE);
             }
         }
         else
@@ -2700,3 +2963,13 @@ public static class IListExtensions
     }
 }
 
+public static class Extensions
+{
+    public static void AddOrUpdateKey<T>(this Dictionary<T, List<T>> dict, T key, T newValue)
+    {
+        if (dict.ContainsKey(key))
+            dict[key].Add(newValue);
+        else
+            dict.Add(key, new List<T>{newValue});
+    }
+}

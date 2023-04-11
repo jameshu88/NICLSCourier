@@ -64,7 +64,7 @@ public class MessageImageDisplayer : MonoBehaviour
         if (show_progress)
             progress.fillAmount -= (1f / progress_time) * Time.deltaTime;
 
-        if (progress.fillAmount == 0 || InputManager.GetButtonDown("Secret"))
+        if (progress.fillAmount == 0 || !show_progress) // InputManager.GetButtonDown("Secret") 
         {
             progress_bar.SetActive(false);
             show_progress = false;
@@ -443,8 +443,10 @@ public class MessageImageDisplayer : MonoBehaviour
         string lowercase_name = "";
         foreach (char c in prompt_string)
         {
-            if(char.IsLetter(c)||c == '\'')
+            if (char.IsLetter(c)||c == '\'')
                 lowercase_name += char.ToLower(c);
+            else if (char.IsDigit(c))
+                lowercase_name += c;
             else
                 lowercase_name += " ";
             

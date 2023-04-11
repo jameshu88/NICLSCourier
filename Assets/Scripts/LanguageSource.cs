@@ -159,7 +159,8 @@ public static class LanguageSource
         { "free recall title", new string [] { "Free Recall", "Freier Abruf"} },
         { "free recall main", new string [] { "Try to recall all the items that you delivered to the stores in this delivery day.\n\nType one item and press <Enter> to submit and type your next response", 
                                               "Versuchen Sie bitte, sich an alle Gegenstände zu erinnern, die Sie an diesem Liefertag zu den Geschäften geliefert haben.\n\nGeben Sie den Namen eines Gegenstands ein und drücken Sie die Eingabetaste, um ihn zu speichern. Geben Sie dann Ihre nächste Antwort ein u.s.w."}},
-
+        { "value recall title", new string [] { "Value Recall", GERMAN_TRANSLATION_NEEDED} },
+        { "value recall main", new string [] { "Please try to estimate the average offer you received during the delivery day.", GERMAN_TRANSLATION_NEEDED} },
         { "cued recall message", new string [] { "Press the (X) key after recalling the item to move to the next store", 
                                                  "Drücken Sie (X), nachdem Sie den Namen des gelieferten Gegenstands ausgesprochen haben, um zum nächsten Geschäft zu gelangen." } },
         { "cued recall title", new string [] { "Cued Recall", "Abruf des zu einem Geschäft gelieferten Gegenstands"} },

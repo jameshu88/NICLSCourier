@@ -10,8 +10,11 @@ using UnityEngine.Networking;
 using UnityEngine.UI;
 
 using Accord.Math;
-using Accord.Statistics.Distributions.Multivariate;
+// using Accord.Statistics.Distributions.Multivariate;
 using Accord.Statistics.Distributions.Univariate;
+using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.Distributions;
 
 using static MessageImageDisplayer;
 using static WorldDataReporter;
@@ -59,11 +62,10 @@ public class DeliveryExperiment : CoroutineExperiment
         private const bool COURIER_ONLINE = true;
     #endif // !UNITY_WEBGL
 
-    // debug
     private const bool skipFPS = true;
     
     private const string COURIER_VERSION = "v6.0.4";
-    private const bool DEBUG = true;
+    private const bool DEBUG = false;
 
     private const string RECALL_TEXT = "*******"; // TODO: JPB: Remove this and use display system
     // Constants moved to the Config File
@@ -249,8 +251,10 @@ public class DeliveryExperiment : CoroutineExperiment
         // Setup covariance matrix variables
         double[] serialPositions = Vector.Range(new Accord.DoubleRange(0, numStores), 1);
         int N = serialPositions.Length;
-        double[] mu = Vector.Zeros(N);
-        double[,] K = Matrix.Zeros(N, N);
+        // double[] mu = Vector.Zeros(N);
+        Vector<double> mu = Vector<double>.Build.Dense(N);
+        // double[,] K = Matrix.Zeros(N, N);
+        Matrix<double> K = Matrix<double>.Build.Dense(N, N);
         int rhoSq = numStores;
 
         // Create covariance matrix
@@ -259,16 +263,28 @@ public class DeliveryExperiment : CoroutineExperiment
             K[i, i] = 1;
             for (int j = i+1; j < N; j++)
             {
-                K[i, j] = Math.Exp(-(1d / (2d * rhoSq)) * Math.Pow(serialPositions[i] - serialPositions[j], 2));
+                K[i, j] = Math.Round(Math.Exp(-(1d / (2d * rhoSq)) * Math.Pow(serialPositions[i] - serialPositions[j], 2)),6);
                 K[j, i] = K[i, j];
             }
         }
         K[(N - 1), (N - 1)] = 1;
 
-        // Generate point values
-        double[] storePoints = new MultivariateNormalDistribution(mu, K).Generate();
+        for (int i=0; i<N; i++)
+        {
+            for (int j=0; j<N; j++)
+            {
+                Debug.Log(i.ToString() + " " + j.ToString());
+                Debug.Log(K[i, j]);
+            }
+        }
+
+        // double[] storePoints = new MultivariateNormalDistribution(mu, K).Generate();
+        double[] storePoints = MatrixNormal.Sample(new System.Random(), mu.ToColumnMatrix(), K, Matrix<double>.Build.DenseIdentity(1)).Column(0).ToArray();
+        // Debug.Log(string.Join(",", storePoints));
+
         // standardize point values
         storePoints = StandardizeStorePoints(storePoints);
+        // Debug.Log(string.Join(",", storePoints));
 
         // sample points from gaussian process
         double pointMean = new UniformContinuousDistribution(30, 70).Generate();
@@ -283,8 +299,10 @@ public class DeliveryExperiment : CoroutineExperiment
     {
         // Setup covariance matrix variables
         int N = stores.Count;
-        double[] mu = Vector.Zeros(N);
-        double[,] K = Matrix.Zeros(N, N);
+        // double[] mu = Vector.Zeros(N);
+        Vector<double> mu = Vector<double>.Build.Dense(N);
+        // double[,] K = Matrix.Zeros(N, N);
+        Matrix<double> K = Matrix<double>.Build.Dense(N, N);
         double rhoSq = N;
         
         // Create covariance matrix
@@ -295,16 +313,20 @@ public class DeliveryExperiment : CoroutineExperiment
             {
                 var a = new double[2] { stores[i].transform.position.x, stores[i].transform.position.z };
                 var b = new double[2] { stores[j].transform.position.x, stores[j].transform.position.z };
-                K[i, j] = Math.Exp(-(1d / (2d * rhoSq)) * Distance.Euclidean(a, b));
+                K[i, j] = Math.Exp(-(1d / (2d * rhoSq)) * Accord.Math.Distance.Euclidean(a, b));
+                Debug.Log(K[i, j]);
                 K[j, i] = K[i, j];
             }
         }
         K[(N - 1), (N - 1)] = 1;
 
         // Generate point values
-        double[] storePoints = new MultivariateNormalDistribution(mu, K).Generate();
+        double[] storePoints = MatrixNormal.Sample(new System.Random(), mu.ToColumnMatrix(), K, Matrix<double>.Build.DenseIdentity(1)).Column(0).ToArray();
+        // Debug.Log(string.Join(",", storePoints));
+
         // standardize point values
         storePoints = StandardizeStorePoints(storePoints);
+        // Debug.Log(string.Join(",", storePoints));
 
         // sample points from gaussian process
         double pointMean = new UniformContinuousDistribution(30, 70).Generate();
@@ -314,7 +336,9 @@ public class DeliveryExperiment : CoroutineExperiment
 
         // Set store object point values
         for (int i = 0; i < N; i++)
+        {
             stores[i].points = storePoints[i];
+        }
 
         return storePoints;
     }
@@ -579,17 +603,22 @@ public class DeliveryExperiment : CoroutineExperiment
         if (UnityEPL.viewCheck)
             return;
 
-        // Configure Experiment
         if (COURIER_ONLINE)
         {
-            UnityEPL.AddParticipant(System.Guid.NewGuid().ToString());
-            UnityEPL.SetExperimentName("COURIER_ONLINE");
-            UnityEPL.SetSessionNumber(0);
-            ConfigureExperiment(false, false, false, 0, "ValueCourier", true);
-        }
+            Debug.Log(UnityEPL.GetParticipants()[0]);
+            Dictionary<string, object> subjectSessionData = new Dictionary<string, object>()
+                {   { "subject", UnityEPL.GetParticipants()[0]},
+                    { "session", sessionNumber } };
+            scriptedEventReporter.ReportScriptedEvent("session", subjectSessionData);
 
-        // if (DEBUG)
-        // ConfigureExperiment(false, false, true, 1, "EFRCourierReadOnly", false);
+            // Configure Experiment
+            // string subjectID = System.Guid.NewGuid().ToString();
+            // UnityEPL.ClearParticipants();
+            // UnityEPL.AddParticipant(subjectID);
+            // UnityEPL.SetExperimentName("COURIER_ONLINE");
+            // UnityEPL.SetSessionNumber(0);
+            // ConfigureExperiment(false, false, false, 0, "ValueCourier", true);
+        }
 
         // Session check
         if (sessionNumber == -1)
@@ -622,7 +651,7 @@ public class DeliveryExperiment : CoroutineExperiment
         #endif // !UNITY_WEBGL
 
         // Turn player particles and falling leaves off for Nicls Courier
-        if (NICLS_COURIER)
+        if (NICLS_COURIER || COURIER_ONLINE)
         {
             GameObject.Find("Player/player perspective/Particle System").SetActive(false);
             var trees = new List<int> { 26, 27, 28, 29, 30, 31, 32, 33, 34, 44 };
@@ -655,10 +684,17 @@ public class DeliveryExperiment : CoroutineExperiment
 
     private IEnumerator ExperimentCoroutine()
     {
-        Debug.Log(UnityEPL.GetDataPath());
-
-        foreach (string name in UnityEPL.GetParticipants())
-            Debug.Log(name);
+        // Configure Experiment
+        // if (COURIER_ONLINE)
+        // {
+        //     UnityEPL.AddParticipant(System.Guid.NewGuid().ToString());
+        //     UnityEPL.SetExperimentName("COURIER_ONLINE");
+        //     UnityEPL.SetSessionNumber(0);
+        //     ConfigureExperiment(false, false, false, 0, "ValueCourier", true);
+        // }
+        
+        // foreach (string name in UnityEPL.GetParticipants())
+        //     Debug.Log(name);
 
         #if !UNITY_WEBGL // NICLS
             // Setup Ramulator
@@ -666,17 +702,20 @@ public class DeliveryExperiment : CoroutineExperiment
                 yield return ramulatorInterface.BeginNewSession(sessionNumber);
 
             // Setup NiclServer
-            if (useNiclServer)
+            if (NICLS_COURIER)
             {
-                yield return niclsInterface.BeginNewSession(false, Config.niclServerIP, Config.niclServerPort, "Cont");
-                SetupNiclsClassifier();
-                niclsInterface.SendReadOnlyState(1);
+                if (useNiclServer)
+                {
+                    yield return niclsInterface.BeginNewSession(false, Config.niclServerIP, Config.niclServerPort, "Cont");
+                    SetupNiclsClassifier();
+                    niclsInterface.SendReadOnlyState(1);
+                }
+                else
+                {
+                    yield return niclsInterface.BeginNewSession(true, Config.niclServerIP, Config.niclServerPort, "Cont");
+                }
             }
-            else
-            {
-                yield return niclsInterface.BeginNewSession(true, Config.niclServerIP, Config.niclServerPort, "Cont");
-            }
-
+            
             // Setup Elemem
             yield return elememInterface.BeginNewSession(!Config.elememOn,
                 Config.elememServerIP, Config.elememServerPort, Config.elememStimMode,
@@ -881,7 +920,6 @@ public class DeliveryExperiment : CoroutineExperiment
         yield return new WaitForSeconds(1.5f);
 
         messageImageDisplayer.fpsDisplay.SetActive(false);
-        pointer.SetActive(true);
         playerMovement.Reset();
 
 
@@ -1127,7 +1165,6 @@ public class DeliveryExperiment : CoroutineExperiment
         yield return new WaitForSeconds(0.1f);
 
         int deliveries = practice ? Config.deliveriesPerPracticeTrial : Config.deliveriesPerTrial;
-        Debug.Log(deliveries.ToString());
 
         // Set store points for the delivery day
         List<StoreComponent> curStoreList = storeLists[trialNumber];
@@ -1247,7 +1284,6 @@ public class DeliveryExperiment : CoroutineExperiment
 
         for (int i = 0; i < deliveries; i++)
         {
-            Debug.Log("Deliver #" + i.ToString());
             // LC: for last delivery, use no stim store. 
             if (EFR_COURIER && !practice)
             {

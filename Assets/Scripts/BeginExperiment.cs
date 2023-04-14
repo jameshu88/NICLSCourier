@@ -33,9 +33,9 @@ public class BeginExperiment : MonoBehaviour
 
     private void OnEnable() 
     {
-        #if UNITY_WEBGL
-            SceneManager.LoadScene(scene_name);
-        #endif // UNITY_WEBGL
+        // #if UNITY_WEBGL
+        //     SceneManager.LoadScene(scene_name);
+        // #endif // UNITY_WEBGL
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -125,95 +125,119 @@ public class BeginExperiment : MonoBehaviour
     }
 
     public void DoBeginExperiment()
-    {
-        if (!IsValidParticipantName(participantCodeInput.text)) {
-            loadingButton.SetActive(false);
-            greyedOutButton.SetActive(true);
-            beginExperimentButton.SetActive(false);
+    {   
+        #if !UNITY_WEBGL
+            if (!IsValidParticipantName(participantCodeInput.text)) {
+                loadingButton.SetActive(false);
+                greyedOutButton.SetActive(true);
+                beginExperimentButton.SetActive(false);
 
-            throw new UnityException("You are trying to start the experiment with an invalid participant name!");
-        }
-
-        //UnityEPL.SetSessionNumber(NextSessionNumber());
-
-        // LC: reset the participant code and experiment name for retry
-        UnityEPL.ClearParticipants();
-        UnityEPL.AddParticipant(participantCodeInput.text);
-
-        string experiment_name = EFR_COURIER ? EXP_NAME_EFR :
-                             NICLS_COURIER ? EXP_NAME_NICLS :
-                             VALUE_COURIER ? EXP_NAME_VALUE :
-                             EXP_NAME_COURIER;
-
-        if (experiment_name == EXP_NAME_NICLS && useNiclsToggle.isOn)
-            experiment_name += "ClosedLoop";
-        else if (experiment_name == EXP_NAME_EFR && useElememToggle.isOn)
-            experiment_name += "OpenLoop";
-        else
-            experiment_name += "ReadOnly";
-
-        UnityEPL.SetExperimentName(experiment_name);
-
-        // LC: check for any existing sessions
-        string dataPath = UnityEPL.GetParticipantFolder();
-        Debug.Log(dataPath);
-        System.IO.Directory.CreateDirectory(dataPath);
-
-        bool sessionExists = false;
-        bool isFirstSession = false;
-        int currentSessionNumber = System.Int32.Parse(sessionInput.text);
-        string[] existingSessionFolders = System.IO.Directory.GetDirectories(dataPath);
-
-        foreach (string folder in existingSessionFolders)
-        {
-            if (folder.Substring(folder.LastIndexOf("_")+1).Equals(currentSessionNumber.ToString()))
-                sessionExists = true;
-                // Debug.Log("Session Exists. Re-enter session number");
-        }
-
-        if (!sessionExists)
-        {
-            LockLanguage();
-            // LC: if current session is 0, check whether this is the actual "first" session
-            if (currentSessionNumber == 0)
-            {
-                // Debug.Log("Session number is 0");
-                string defaultRoot = "";
-                if (Application.isEditor)
-                    defaultRoot = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
-                else
-                    defaultRoot = System.IO.Path.GetFullPath(".");
-                defaultRoot = System.IO.Path.Combine(defaultRoot, "data");
-                string[] folders = System.IO.Directory.GetDirectories(defaultRoot);
-
-                // LC: check if there is another session 0 folder
-                string otherExperimentName = useElememToggle.isOn ? "EFRCourierReadOnly" : "EFRCourierOpenLoop";
-                string otherDirectory = System.IO.Path.Combine(defaultRoot, otherExperimentName);
-                otherDirectory = System.IO.Path.Combine(otherDirectory, string.Join("", UnityEPL.GetParticipants()));
-                otherDirectory = System.IO.Path.Combine(otherDirectory, "session_" + currentSessionNumber.ToString());
-                // Debug.Log("OTHER: " + otherDirectory);
-
-                if (System.IO.Directory.Exists(otherDirectory))
-                    isFirstSession = false;
-                else
-                    isFirstSession = true;
+                throw new UnityException("You are trying to start the experiment with an invalid participant name!");
             }
 
-            // TODO: JPB: Use NextSessionNumber()
+            // LC: reset the participant code and experiment name for retry
+            UnityEPL.ClearParticipants();
+            UnityEPL.AddParticipant(participantCodeInput.text);
+
+            string experiment_name = EFR_COURIER ? EXP_NAME_EFR :
+                                NICLS_COURIER ? EXP_NAME_NICLS :
+                                VALUE_COURIER ? EXP_NAME_VALUE :
+                                EXP_NAME_COURIER;
+
+            if (experiment_name == EXP_NAME_NICLS && useNiclsToggle.isOn)
+                experiment_name += "ClosedLoop";
+            else if (experiment_name == EXP_NAME_EFR && useElememToggle.isOn)
+                experiment_name += "OpenLoop";
+            else
+                experiment_name += "ReadOnly";
+
+            UnityEPL.SetExperimentName(experiment_name);
+
+            // LC: check for any existing sessions
+            string dataPath = UnityEPL.GetParticipantFolder();
+            Debug.Log(dataPath);
+            System.IO.Directory.CreateDirectory(dataPath);
+
+            bool sessionExists = false;
+            bool isFirstSession = false;
+            int currentSessionNumber = System.Int32.Parse(sessionInput.text);
+            string[] existingSessionFolders = System.IO.Directory.GetDirectories(dataPath);
+
+            foreach (string folder in existingSessionFolders)
+            {
+                if (folder.Substring(folder.LastIndexOf("_")+1).Equals(currentSessionNumber.ToString()))
+                    sessionExists = true;
+                    // Debug.Log("Session Exists. Re-enter session number");
+            }
+
+            if (!sessionExists)
+            {
+                LockLanguage();
+                // LC: if current session is 0, check whether this is the actual "first" session
+                if (currentSessionNumber == 0)
+                {
+                    // Debug.Log("Session number is 0");
+                    string defaultRoot = "";
+                    if (Application.isEditor)
+                        defaultRoot = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop);
+                    else
+                        defaultRoot = System.IO.Path.GetFullPath(".");
+                    defaultRoot = System.IO.Path.Combine(defaultRoot, "data");
+                    string[] folders = System.IO.Directory.GetDirectories(defaultRoot);
+
+                    // LC: check if there is another session 0 folder
+                    string otherExperimentName = useElememToggle.isOn ? "EFRCourierReadOnly" : "EFRCourierOpenLoop";
+                    string otherDirectory = System.IO.Path.Combine(defaultRoot, otherExperimentName);
+                    otherDirectory = System.IO.Path.Combine(otherDirectory, string.Join("", UnityEPL.GetParticipants()));
+                    otherDirectory = System.IO.Path.Combine(otherDirectory, "session_" + currentSessionNumber.ToString());
+                    // Debug.Log("OTHER: " + otherDirectory);
+
+                    if (System.IO.Directory.Exists(otherDirectory))
+                        isFirstSession = false;
+                    else
+                        isFirstSession = true;
+                }
+
+                // TODO: JPB: Use NextSessionNumber()
+                DeliveryExperiment.ConfigureExperiment(useRamulatorToggle.isOn, useNiclsToggle.isOn, useElememToggle.isOn,
+                                                    UnityEPL.GetSessionNumber(), experiment_name, isFirstSession);
+                Debug.Log("Ram On: " + useRamulatorToggle.isOn);
+                Debug.Log("Nicls On: " + useNiclsToggle.isOn);
+                Debug.Log("Elemem On: " + useElememToggle.isOn);
+                Debug.Log("First session: " + isFirstSession.ToString());
+                SceneManager.LoadScene(scene_name);
+            }
+            else
+            {
+                loadingButton.SetActive(false);
+                greyedOutButton.SetActive(true);
+                beginExperimentButton.SetActive(false);
+            }
+
+        #else
+            UnityEPL.ClearParticipants();
+            UnityEPL.AddParticipant(participantCodeInput.text);
+
+            string experiment_name = EFR_COURIER ? EXP_NAME_EFR :
+                                     NICLS_COURIER ? EXP_NAME_NICLS :
+                                     VALUE_COURIER ? EXP_NAME_VALUE :
+                                     EXP_NAME_COURIER;
+
+            if (experiment_name == EXP_NAME_NICLS && useNiclsToggle.isOn)
+                experiment_name += "ClosedLoop";
+            else if (experiment_name == EXP_NAME_EFR && useElememToggle.isOn)
+                experiment_name += "OpenLoop";
+            else
+                experiment_name += "ReadOnly";
+
+            UnityEPL.SetExperimentName(experiment_name);
+            int sessionNumber = System.Int32.Parse(sessionInput.text);
+            bool isFirstSession = true;
+
             DeliveryExperiment.ConfigureExperiment(useRamulatorToggle.isOn, useNiclsToggle.isOn, useElememToggle.isOn,
-                                                UnityEPL.GetSessionNumber(), experiment_name, isFirstSession);
-            Debug.Log("Ram On: " + useRamulatorToggle.isOn);
-            Debug.Log("Nicls On: " + useNiclsToggle.isOn);
-            Debug.Log("Elemem On: " + useElememToggle.isOn);
-            Debug.Log("First session: " + isFirstSession.ToString());
+                                                    sessionNumber, experiment_name, isFirstSession);
             SceneManager.LoadScene(scene_name);
-        }
-        else
-        {
-            loadingButton.SetActive(false);
-            greyedOutButton.SetActive(true);
-            beginExperimentButton.SetActive(false);
-        }
+        #endif
     }
 
     private int NextSessionNumber()

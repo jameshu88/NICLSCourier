@@ -79,7 +79,7 @@ public class DeliveryExperiment : CoroutineExperiment
     private const int HOSPTIAL_TOWN_LEARNING_NUM_STORES = 8;
     private const int SINGLE_TOWN_LEARNING_SESSIONS = 1;
     private const int DOUBLE_TOWN_LEARNING_SESSIONS = 0;
-    private const int POINTING_INDICATOR_DELAY = NICLS_COURIER ? 12 : COURIER_ONLINE ? 12 : 48;
+    private const int POINTING_INDICATOR_DELAY = NICLS_COURIER ? 12 : COURIER_ONLINE ? 10 : 48;
     private const int EFR_KEYPRESS_PRACTICES = 10;
     private const float FRAME_TEST_LENGTH = 20f;
     private const float MIN_FAMILIARIZATION_ISI = 0.4f;
@@ -87,11 +87,11 @@ public class DeliveryExperiment : CoroutineExperiment
     private const float FAMILIARIZATION_PRESENTATION_LENGTH = 1.5f;
     private const float RECALL_MESSAGE_DISPLAY_LENGTH = 6f;
     private const float RECALL_TEXT_DISPLAY_LENGTH = 1f;
-    private const float FREE_RECALL_LENGTH = DEBUG ? 10f : 90f;
+    private const float FREE_RECALL_LENGTH = DEBUG ? 10f : VALUE_COURIER ? 60f : 90f;
     private const float VALUE_RECALL_LENGTH = 10f;
     private const float PRACTICE_FREE_RECALL_LENGTH = 25f;
     private const float STORE_FINAL_RECALL_LENGTH = 90f;
-    private const float OBJECT_FINAL_RECALL_LENGTH = NICLS_COURIER ? 120f : COURIER_ONLINE ? 240f : 180f;
+    private const float OBJECT_FINAL_RECALL_LENGTH = NICLS_COURIER ? 120f : COURIER_ONLINE ? 120f : 180f;
     private const float TIME_BETWEEN_DIFFERENT_RECALL_PHASES = 2f;
     // private const float CUED_RECALL_TIME_PER_STORE = 10f;
     private const float MIN_CUED_RECALL_TIME_PER_STORE = 2f;
@@ -280,7 +280,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
         // double[] storePoints = new MultivariateNormalDistribution(mu, K).Generate();
         double[] storePoints = MatrixNormal.Sample(new System.Random(), mu.ToColumnMatrix(), K, Matrix<double>.Build.DenseIdentity(1)).Column(0).ToArray();
-        // Debug.Log(string.Join(",", storePoints));
+        Debug.Log(string.Join(",", storePoints));
 
         // standardize point values
         storePoints = StandardizeStorePoints(storePoints);
@@ -322,7 +322,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
         // Generate point values
         double[] storePoints = MatrixNormal.Sample(new System.Random(), mu.ToColumnMatrix(), K, Matrix<double>.Build.DenseIdentity(1)).Column(0).ToArray();
-        // Debug.Log(string.Join(",", storePoints));
+        Debug.Log(string.Join(",", storePoints));
 
         // standardize point values
         storePoints = StandardizeStorePoints(storePoints);
@@ -1166,61 +1166,44 @@ public class DeliveryExperiment : CoroutineExperiment
 
         int deliveries = practice ? Config.deliveriesPerPracticeTrial : Config.deliveriesPerTrial;
 
-        // Set store points for the delivery day
+        // Set store points for the delivery day (Value Courier)
         List<StoreComponent> curStoreList = storeLists[trialNumber];
-        string storenames = "";
-        foreach (StoreComponent store in curStoreList) 
-        {
-            storenames += store.GetStoreName() + ", ";
-        }
-        Debug.Log(storenames);
-
         double[] allStoresPoints = null;
         bool containsNegative = false;
-        switch(storePointType)
+        
+        if (VALUE_COURIER)
         {
-            case StorePointType.Random:
-                allStoresPoints = RandomStorePoints(deliveries-1);
-                containsNegative = allStoresPoints.Any(n => n < 0);
-                while (containsNegative)
-                {
-                    Debug.Log("Oops, negative values here");
+            switch(storePointType)
+            {
+                case StorePointType.Random:
                     allStoresPoints = RandomStorePoints(deliveries-1);
                     containsNegative = allStoresPoints.Any(n => n < 0);
-                }
-                Debug.Log("No negatives now");
-                break;
-            case StorePointType.SerialPosition:
-                allStoresPoints = TemporalStorePoints(deliveries-1);
-                containsNegative = allStoresPoints.Any(n => n < 0);
-                while (containsNegative)
-                {
-                    Debug.Log("Oops, negative values here");
+                    while (containsNegative)
+                    {
+                        allStoresPoints = RandomStorePoints(deliveries-1);
+                        containsNegative = allStoresPoints.Any(n => n < 0);
+                    }
+                    break;
+                case StorePointType.SerialPosition:
                     allStoresPoints = TemporalStorePoints(deliveries-1);
                     containsNegative = allStoresPoints.Any(n => n < 0);
-                }
-                Debug.Log("No negatives now");
-                break;
-            case StorePointType.SpatialPosition:
-                allStoresPoints = SpatialStorePoints(curStoreList.GetRange(0, deliveries-1));
-                containsNegative = allStoresPoints.Any(n => n < 0);
-                while (containsNegative)
-                {
-                    Debug.Log("Oops, negative values here");
+                    while (containsNegative)
+                    {
+                        allStoresPoints = TemporalStorePoints(deliveries-1);
+                        containsNegative = allStoresPoints.Any(n => n < 0);
+                    }
+                    break;
+                case StorePointType.SpatialPosition:
                     allStoresPoints = SpatialStorePoints(curStoreList.GetRange(0, deliveries-1));
                     containsNegative = allStoresPoints.Any(n => n < 0);
-                }
-                Debug.Log("No negatives now");
-                break;
+                    while (containsNegative)
+                    {
+                        allStoresPoints = SpatialStorePoints(curStoreList.GetRange(0, deliveries-1));
+                        containsNegative = allStoresPoints.Any(n => n < 0);
+                    }
+                    break;
+            }
         }
-
-        Debug.Log(storePointType);
-        string pointvalues = "";
-        foreach (double point in allStoresPoints)
-        {
-            pointvalues += point.ToString() + ", ";
-        }
-        Debug.Log(pointvalues);
 
         SetRamulatorState("ENCODING", true, new Dictionary<string, object>());
         SetElememState(ElememStateMsg.ENCODING);
@@ -1312,7 +1295,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
             messageImageDisplayer.please_find_the_blah_reminder.SetActive(false);
             messageImageDisplayer.SetReminderText(nextStore.GetStoreName());
-            if (!NICLS_COURIER && !VALUE_COURIER)
+            if (!NICLS_COURIER) // && !VALUE_COURIER)
                 yield return DoPointingTask(nextStore);
             messageImageDisplayer.please_find_the_blah_reminder.SetActive(true);
             playerMovement.Unfreeze();
@@ -1324,24 +1307,28 @@ public class DeliveryExperiment : CoroutineExperiment
                 yield return null;
                 if (Time.time > startTime + POINTING_INDICATOR_DELAY)
                     yield return DisplayPointingIndicator(nextStore, true);
-                if (InputManager.GetButton("Secret"))
+                if (!COURIER_ONLINE && InputManager.GetButton("Secret"))
+                // if (InputManager.GetButton("Secret"))
                     goto SkipRemainingDeliveries;
             }
             yield return DisplayPointingIndicator(nextStore, false);
 
             // Get points for this store, default value being -1
             double storePoints = 0.0;
-            switch (storePointType)
-            {
-                case StorePointType.Random:
-                case StorePointType.SerialPosition:
-                    storePoints = allStoresPoints[i];
-                    break;
-                case StorePointType.SpatialPosition:
-                    storePoints = nextStore.points;
-                    break;
+            if (VALUE_COURIER){
+                switch (storePointType)
+                {
+                    case StorePointType.Random:
+                    case StorePointType.SerialPosition:
+                        storePoints = allStoresPoints[i];
+                        break;
+                    case StorePointType.SpatialPosition:
+                        storePoints = nextStore.points;
+                        break;
+                }
             }
-            storePoints = VALUE_COURIER ? storePoints : -1.0;
+            else
+                storePoints = -1.0;
 
             ///AUDIO PRESENTATION OF OBJECT///
             if (i != deliveries - 1)
@@ -1766,7 +1753,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 taskStart = Time.time;
             }
 
-            // 3 main cases: free recall, cued recall, value recall
+            // 3 main cases: free recall, cued recall, value guess
             // free recall will last for the entirety
             // cued recall and value guess will end whenever correct input has been typed
             if (Input.GetKeyDown(KeyCode.Return))
@@ -1776,7 +1763,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 int inputFieldAsNum;
                 if (int.TryParse(inputField.text, out inputFieldAsNum))
                 {
-                    if (taskType == "value recall")
+                    if (taskType == "value guess")
                     {
                         valueGuessWrongType.SetActive(false);
 
@@ -1803,7 +1790,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 else
                 {
                     // value guess should have numeric response
-                    if (taskType == "value recall")
+                    if (taskType == "value guess")
                     {
                         valueGuessWrongType.SetActive(true);
                     }
@@ -2064,22 +2051,22 @@ public class DeliveryExperiment : CoroutineExperiment
     // LC: not implemented for double session, only for single session
     private IEnumerator DoValueRecall(int trialNumber)
     {
-        scriptedEventReporter.ReportScriptedEvent("start value recall");
+        scriptedEventReporter.ReportScriptedEvent("start value guess");
         BlackScreen();
 
         if (COURIER_ONLINE)
         {
-            messageImageDisplayer.SetGeneralBigMessageText("value recall title", "value recall main");
+            messageImageDisplayer.SetGeneralBigMessageText("value guess title", "value guess main");
             yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
         }
 
         #if !UNITY_WEBGL
             // TODO: implement for UNITY standalone version
         #else
-            yield return DoTypedResponses(trialNumber, "value recall", VALUE_RECALL_LENGTH, freeInputField, freeResponse);
+            yield return DoTypedResponses(trialNumber, "value guess", VALUE_RECALL_LENGTH, freeInputField, freeResponse);
         #endif
 
-        scriptedEventReporter.ReportScriptedEvent("stop value recall");
+        scriptedEventReporter.ReportScriptedEvent("stop value guess");
     }
 
     private IEnumerator DoFinalRecall(int subSessionNum)

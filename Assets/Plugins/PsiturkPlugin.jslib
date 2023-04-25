@@ -9,7 +9,8 @@ mergeInto(LibraryManager.library, {
     },
     
     EndTask: function() {
-        Questionnaire(psiturk);
+        // Questionnaire(psiturk);
+        psiturk.completeHIT();
     },
 
     NoRefresh: function() {

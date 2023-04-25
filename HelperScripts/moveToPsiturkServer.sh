@@ -17,7 +17,7 @@ fi
 
 destPath=$(echo $2 | grep -o ".*/")
 
-copyToPsiturk="cd Courier_Online; scp -r $2 maint@psiturk.sas.upenn.edu:~/Courier_Online/$destPath"
+copyToPsiturk="cd Courier_Online; scp -r $2 maint@cmlpsiturk.compmemlab.org:~/courier_online_class/builds/$destPath"
 sshToMaint="ssh maint@localhost"
 copyToMaint="cd Courier_Online; scp -r $2 maint@localhost:~/Courier_Online/$destPath"
 sshToRhino="ssh $1@rhino2.psych.upenn.edu"

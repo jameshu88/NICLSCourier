@@ -2456,7 +2456,6 @@ public class DeliveryExperiment : CoroutineExperiment
     }
 
 
-    // LC: TODO: Add Elemem stim here (alternating 3 sec, always starting off with NO_STIM)
     private IEnumerator DoFreeRecallDisplay(string title, float waitTime, bool practice = false, bool efrDisabled = false)
     {
         BlackScreen();

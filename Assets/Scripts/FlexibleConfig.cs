@@ -18,6 +18,11 @@ public class Config
     // LC: TODO: COME UP WITH A BETTER WAY
     public static string elememStimMode = "none";
 
+    // Experiment Type
+    public static bool EFRCourier { get { return (bool)Config.GetSetting("EFRCourier"); } }
+    public static bool NICLSCourier { get { return (bool)Config.GetSetting("NICLSCourier"); } }
+    public static bool ValueCourier { get { return (bool)Config.GetSetting("ValueCourier"); } }
+
     // System Settings
     public static string niclServerIP { get { return (string)Config.GetSetting("niclServerIP"); } }
     public static int niclServerPort { get { return (int)Config.GetSetting("niclServerPort"); } }
@@ -41,6 +46,17 @@ public class Config
     public static bool skipTownLearning { get { return (bool)Config.GetSetting("skipTownLearning"); } }
     public static bool skipNewEfrKeypressCheck { get { return (bool)Config.GetSetting("skipNewEfrKeypressCheck"); } }
     public static bool skipNewEfrKeypressPractice { get { return (bool)Config.GetSetting("skipNewEfrKeypressPractice"); } }
+
+    // Pointing Indicator Trigger Options
+    public static bool distTrigger { get { return (bool)Config.GetSetting("distTrigger"); } }
+    public static int distThreshold { get { return (int)Config.GetSetting("distThreshold"); } }
+    public static bool timeTrigger { get { return (bool)Config.GetSetting("timeTrigger"); } }
+    public static int timeDelay { get { return (int)Config.GetSetting("timeDelay"); } }
+
+    // Recall Task Enables
+    public static bool doCuedRecall { get { return (bool)Config.GetSetting("doCuedRecall"); } }
+    public static bool doFinalRecall { get { return (bool)Config.GetSetting("doFinalRecall"); } }
+    public static bool doReject { get { return (bool)Config.GetSetting("doReject"); } }
 
     // Game Logic
     public static bool efrEnabled { get { return (bool)Config.GetSetting("efrEnabled"); } }

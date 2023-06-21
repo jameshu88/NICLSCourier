@@ -18,6 +18,8 @@ using MathNet.Numerics.Distributions;
 
 using static MessageImageDisplayer;
 using static WorldDataReporter;
+using UnityEngine.AI;
+using static UnityEditor.PlayerSettings;
 
 [System.Serializable]
 public struct Environment
@@ -53,9 +55,9 @@ public class DeliveryExperiment : CoroutineExperiment
     // TODO: JPB: Make these configuration variables
 
     // Experiment type
-    private const bool EFR_COURIER = false;
+    private const bool EFR_COURIER = true;
     private const bool NICLS_COURIER = false;
-    private const bool VALUE_COURIER = true;
+    private const bool VALUE_COURIER = false;
     #if !UNITY_WEBGL
         private const bool COURIER_ONLINE = false;
     #else
@@ -79,7 +81,8 @@ public class DeliveryExperiment : CoroutineExperiment
     private const int HOSPTIAL_TOWN_LEARNING_NUM_STORES = 8;
     private const int SINGLE_TOWN_LEARNING_SESSIONS = 1;
     private const int DOUBLE_TOWN_LEARNING_SESSIONS = 0;
-    private const int POINTING_INDICATOR_DELAY = NICLS_COURIER ? 12 : COURIER_ONLINE ? 10 : 48;
+    private readonly int POINTING_INDICATOR_DELAY = Config.timeDelay;
+    private readonly int DISTANCE_THRESHOLD = Config.distThreshold;
     private const int EFR_KEYPRESS_PRACTICES = 10;
     private const float FRAME_TEST_LENGTH = 20f;
     private const float MIN_FAMILIARIZATION_ISI = 0.4f;
@@ -195,7 +198,7 @@ public class DeliveryExperiment : CoroutineExperiment
     int freeIndex = 0;
     int valueIndex = 0;
     int number_input;
-    List<List<StoreComponent>> storeLists;
+    List<List<StoreComponent>> storeLists;  // For Value Courier
 
     // Stim / No Stim Stores Lists
     public List<StoreComponent> StimStores = new List<StoreComponent>();
@@ -739,8 +742,8 @@ public class DeliveryExperiment : CoroutineExperiment
         // Setup Environment
         yield return EnableEnvironment();
 
-        // LC: Courier Online store list generator
-        if (COURIER_ONLINE && VALUE_COURIER)
+        // Value Courier store list generator
+        if (VALUE_COURIER)
             storeLists = getTotalList(environment, Config.trialsPerSession, Config.deliveriesPerTrial);
 
         // set stim/no_stim stores unique for each subject
@@ -877,7 +880,10 @@ public class DeliveryExperiment : CoroutineExperiment
             if (Config.twoBtnEfrEnabled)
                 messageImageDisplayer.SetGeneralMessageText(mainText: "first day main", descriptiveText: "two btn er first day description");
             else
-                messageImageDisplayer.SetGeneralMessageText(mainText: "first day main", descriptiveText: "one btn er first day description");
+            {
+                if (Config.doReject) messageImageDisplayer.SetGeneralMessageText(mainText: "first day main", descriptiveText: "one btn er first day description");
+                else messageImageDisplayer.SetGeneralMessageText(mainText: "first day main");
+            }
         else
             messageImageDisplayer.SetGeneralMessageText(mainText: "first day main");
         yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_message_display);
@@ -885,7 +891,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
         // Final Recalls
         BlackScreen();
-        yield return DoFinalRecall(subSessionNum);
+        if (Config.doFinalRecall) yield return DoFinalRecall(subSessionNum);
         
     }
 
@@ -1003,16 +1009,29 @@ public class DeliveryExperiment : CoroutineExperiment
             if (Config.twoBtnEfrEnabled)
                 messages = messageImageDisplayer.recap_instruction_messages_efr_2btn_en;
             else
-                messages = EFR_COURIER ? 
+                messages = EFR_COURIER ? ( Config.doReject ?
                            ( LanguageSource.current_language.Equals(LanguageSource.LANGUAGE.ENGLISH) ? 
                              messageImageDisplayer.hospital_recap_instruction_messages_en :
                              messageImageDisplayer.hospital_recap_instruction_messages_gr 
-                           )             
-                           : messageImageDisplayer.recap_instruction_messages_efr_en;
+                           ) :
+                           (LanguageSource.current_language.Equals(LanguageSource.LANGUAGE.ENGLISH) ?
+                             messageImageDisplayer.hospital_recap_instruction_messages_nr_en :
+                             messageImageDisplayer.hospital_recap_instruction_messages_nr_gr
+                           )
+                           )            
+                           : Config.doReject ? messageImageDisplayer.recap_instruction_messages_efr_en :
+                           messageImageDisplayer.recap_instruction_messages_fr_en;
         else
             messages = VALUE_COURIER ? 
                           messageImageDisplayer.online_value_instruction_messages_en
                         : messageImageDisplayer.recap_instruction_messages_fr_en;
+
+        if (!Config.doCuedRecall)
+        {
+            List<GameObject> temp = new List<GameObject>(messages);
+            temp.RemoveAt(4);
+            messages = temp.ToArray();
+        }
 
         // LC: if you want them to go back and forth...?
         if (recap)
@@ -1123,10 +1142,22 @@ public class DeliveryExperiment : CoroutineExperiment
             messageImageDisplayer.SetReminderText(nextStore.GetStoreName());
 
             float startTime = Time.time;
+            float cumDist = 0f;
+            float dist = CalculateDistance(nextStore.transform.Find("DeliveryZone"));
+            bool distTriggerActivated = false;
+            bool timeTriggerActivated = false;
             while (!nextStore.PlayerInDeliveryPosition())
             {
                 yield return null;
-                if (Time.time > startTime + POINTING_INDICATOR_DELAY)
+
+                float newDist = CalculateDistance(nextStore.transform.Find("DeliveryZone"));
+                if (newDist > dist)cumDist += newDist - dist;
+                dist = newDist;
+
+                if (Time.time > startTime + POINTING_INDICATOR_DELAY && Config.timeTrigger) timeTriggerActivated = true;
+                if (cumDist > DISTANCE_THRESHOLD && Config.distTrigger) distTriggerActivated = true;
+
+                if (timeTriggerActivated || distTriggerActivated)
                     yield return DisplayPointingIndicator(nextStore, true);
                 if (InputManager.GetButton("Secret"))
                     goto SkipRemainingDeliveries;
@@ -1138,7 +1169,9 @@ public class DeliveryExperiment : CoroutineExperiment
                                                    {"store name", nextStore.GetStoreName()},
                                                    {"serial position", i+1},
                                                    {"player position", playerMovement.transform.position.ToString()},
-                                                   {"store position", nextStore.transform.position.ToString()}});
+                                                   {"store position", nextStore.transform.position.ToString()},
+                                                   {"distance trigger activated", distTriggerActivated.ToString()},
+                                                   {"time trigger activated", timeTriggerActivated.ToString()}});
         }
 
     SkipRemainingDeliveries:
@@ -1166,14 +1199,19 @@ public class DeliveryExperiment : CoroutineExperiment
 
         int deliveries = practice ? Config.deliveriesPerPracticeTrial : Config.deliveriesPerTrial;
 
+        Debug.Log(VALUE_COURIER);
         // Set store points for the delivery day (Value Courier)
-        List<StoreComponent> curStoreList = storeLists[trialNumber];
+        List<StoreComponent> curStoreList = null;
         double[] allStoresPoints = null;
         bool containsNegative = false;
+
         
+
         if (VALUE_COURIER)
         {
-            switch(storePointType)
+            curStoreList = storeLists[trialNumber];
+
+            switch (storePointType)
             {
                 case StorePointType.Random:
                     allStoresPoints = RandomStorePoints(deliveries-1);
@@ -1302,13 +1340,24 @@ public class DeliveryExperiment : CoroutineExperiment
             EnablePlayerTransfromReporting(true);
 
             float startTime = Time.time;
+            float cumDist = 0f;
+            float dist = CalculateDistance(nextStore.transform.Find("DeliveryZone"));
+            bool distTriggerActivated = false;
+            bool timeTriggerActivated = false;
             while (!nextStore.PlayerInDeliveryPosition())
             {
                 yield return null;
-                if (Time.time > startTime + POINTING_INDICATOR_DELAY)
+
+                float newDist = CalculateDistance(nextStore.transform.Find("DeliveryZone"));
+                if (newDist > dist) cumDist += newDist - dist;
+                dist = newDist;
+
+                if (Time.time > startTime + POINTING_INDICATOR_DELAY && Config.timeTrigger) timeTriggerActivated = true;
+                if (cumDist > DISTANCE_THRESHOLD && Config.distTrigger) distTriggerActivated = true;
+
+                if (timeTriggerActivated || distTriggerActivated)
                     yield return DisplayPointingIndicator(nextStore, true);
-                if (!COURIER_ONLINE && InputManager.GetButton("Secret"))
-                // if (InputManager.GetButton("Secret"))
+                if (InputManager.GetButton("Secret"))
                     goto SkipRemainingDeliveries;
             }
             yield return DisplayPointingIndicator(nextStore, false);
@@ -1380,6 +1429,8 @@ public class DeliveryExperiment : CoroutineExperiment
                                                                             {"serial position", i+1},
                                                                             {"player position", playerMovement.transform.position.ToString()},
                                                                             {"store position", nextStore.transform.position.ToString()},
+                                                                            {"distance trigger activated", distTriggerActivated.ToString()},
+                                                                            {"time trigger activated", timeTriggerActivated.ToString()},
                                                                             {"store value", roundedPoints},
                                                                             {"point condition", (int)storePointType},
                                                                             {"task condition", freeFirst ? "FreeFirst" : "ValueFirst"},
@@ -1477,7 +1528,7 @@ public class DeliveryExperiment : CoroutineExperiment
                         yield return DoTwoBtnErKeypressPractice();
                     }
                 }
-                else // One btn ER
+                else  // One btn ER
                 {
                     if (Config.efrEnabled)
                         yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
@@ -1616,7 +1667,10 @@ public class DeliveryExperiment : CoroutineExperiment
                     if (NICLS_COURIER)
                         messageImageDisplayer.SetGeneralBigMessageText(mainText: "next day");
                     else
-                        messageImageDisplayer.SetGeneralBigMessageText(titleText: "efr reminder title", mainText: "efr reminder main");
+                    {
+                        if (Config.doReject) messageImageDisplayer.SetGeneralBigMessageText(titleText: "efr reminder title", mainText: "efr reminder main");
+                        else messageImageDisplayer.SetGeneralBigMessageText(titleText: "efr reminder title", mainText: "efr reminder main no reject");
+                    }
                     yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
                 }
 
@@ -1860,7 +1914,7 @@ public class DeliveryExperiment : CoroutineExperiment
         else
         {
             yield return DoFreeRecall(trialNumber, continuousTrialNum, practice);
-            yield return DoCuedRecall(trialNumber, continuousTrialNum, practice);
+            if (Config.doCuedRecall) yield return DoCuedRecall(trialNumber, continuousTrialNum, practice);
         }
 
         SetRamulatorState("RETRIEVAL", false, new Dictionary<string, object>());
@@ -1874,15 +1928,21 @@ public class DeliveryExperiment : CoroutineExperiment
             yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
         }
 
-        // if (EFR_COURIER && !practice)
-        // {
-        //     // LC: add reminder instructions at the beginning of every recall task
-        //     if (Config.efrEnabled)
-        //         messageImageDisplayer.SetGeneralBigMessageText(titleText: "one btn efr instructions title",
-        //                                                         mainText: "one btn efr instructions main");
-        //     yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
-        // }
-        
+        //if (EFR_COURIER && !practice)
+        //{
+        //    // LC: add reminder instructions at the beginning of every recall task
+        //    if (Config.efrEnabled)
+        //    {
+        //        if (Config.doReject) messageImageDisplayer.SetGeneralBigMessageText(titleText: "one btn efr instructions title",
+        //                                                        mainText: "one btn efr instructions main");
+        //        else
+        //            messageImageDisplayer.SetGeneralBigMessageText(titleText: "one btn efr instructions title",
+        //                                                        mainText: "one btn efr instructions main no reject");
+        //    }
+                
+        //    yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
+        //}
+
         scriptedEventReporter.ReportScriptedEvent("start free recall");
         BlackScreen();
         textDisplayer.ClearText();
@@ -1967,12 +2027,14 @@ public class DeliveryExperiment : CoroutineExperiment
         }
         else if (EFR_COURIER) // TODO: JPB: Merge this with the else statement (need descriptions)
         {
-            messageImageDisplayer.SetGeneralBigMessageText(mainText: "store cue recall");
+            if (Config.doReject) messageImageDisplayer.SetGeneralBigMessageText(mainText: "store cue recall");
+            else messageImageDisplayer.SetGeneralBigMessageText(mainText: "store cue recall no reject");
             yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
         }
         else
         {
-            textDisplayer.DisplayText("display day cued recall prompt", LanguageSource.GetLanguageString("store cue recall"));
+            if (Config.doReject) textDisplayer.DisplayText("display day cued recall prompt", LanguageSource.GetLanguageString("store cue recall"));
+            else textDisplayer.DisplayText("display day cued recall prompt", LanguageSource.GetLanguageString("store cue recall no reject"));
             yield return SkippableWait(RECALL_MESSAGE_DISPLAY_LENGTH);
             textDisplayer.ClearText();
         }
@@ -2470,7 +2532,7 @@ public class DeliveryExperiment : CoroutineExperiment
                     messageImageDisplayer.efr_display, waitTime,
                     efrLeftLogMsg, efrRightLogMsg, practice);
             }
-            else // One btn EFR
+            else if (Config.doReject) // One btn EFR
             {
                 if (NICLS_COURIER)
                 {
@@ -2489,6 +2551,27 @@ public class DeliveryExperiment : CoroutineExperiment
                                                                         continueText: "speak now");
                     yield return messageImageDisplayer.DisplayMessageTimedKeypressBold(
                         messageImageDisplayer.general_bigger_message_display, waitTime, ActionButton.RejectButton, "title text", "reject button");
+                }
+            }
+            else
+            {
+                if (NICLS_COURIER)
+                {
+                    messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "",
+                                                                      continueText: "speak now");
+                    yield return messageImageDisplayer.DisplayMessageTimed(
+                        messageImageDisplayer.general_bigger_message_display, waitTime);
+                }
+                else
+                {
+                    if (title == "final store recall")
+                        messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "",
+                                                                        continueText: "speak now");
+                    else
+                        messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "",
+                                                                        continueText: "speak now");
+                    yield return messageImageDisplayer.DisplayMessageTimed(
+                        messageImageDisplayer.general_bigger_message_display, waitTime);
                 }
             }
         }
@@ -2518,11 +2601,24 @@ public class DeliveryExperiment : CoroutineExperiment
                 //        messageImageDisplayer.efr_display, waitTime,
                 //        efrLeftLogMsg, efrRightLogMsg, practice);
             }
-            else // One btn ECR
+            else if (Config.doReject) // One btn ECR
             {
                 messageImageDisplayer.SetCuedRecallMessage("one btn ecr message", EFR_COURIER, Config.ecrEnabled);
                 Func<IEnumerator> func = () => { return messageImageDisplayer.DisplayMessageTimedKeypressBold(
                     messageImageDisplayer.cued_recall_title, waitTime, ActionButton.RejectButton, EFR_COURIER ? "title text" : "continue text", "reject button"); };
+                messageImageDisplayer.cued_recall_message.SetActive(true);
+                messageImageDisplayer.DoProgressDisplay(true, MAX_CUED_RECALL_TIME_PER_STORE);
+                yield return messageImageDisplayer.DisplayMessageFunction(store.familiarization_object, func);
+                messageImageDisplayer.cued_recall_message.SetActive(false);
+                messageImageDisplayer.DoProgressDisplay(false, MAX_CUED_RECALL_TIME_PER_STORE);
+            }
+            else
+            {
+                messageImageDisplayer.SetCuedRecallMessage("", EFR_COURIER, Config.ecrEnabled);
+                Func<IEnumerator> func = () => {
+                    return messageImageDisplayer.DisplayMessageTimed(
+                    messageImageDisplayer.cued_recall_title, waitTime);
+                };
                 messageImageDisplayer.cued_recall_message.SetActive(true);
                 messageImageDisplayer.DoProgressDisplay(true, MAX_CUED_RECALL_TIME_PER_STORE);
                 yield return messageImageDisplayer.DisplayMessageFunction(store.familiarization_object, func);
@@ -2650,17 +2746,21 @@ public class DeliveryExperiment : CoroutineExperiment
         yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_message_display);
 
         // Ask for reject button press
-        messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "one btn er message", continueText: "");
-        messageImageDisplayer.general_bigger_message_display.SetActive(true);
+        if (Config.doReject)
+        {
+            messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "one btn er message", continueText: "");
+            messageImageDisplayer.general_bigger_message_display.SetActive(true);
 
-        Text toggleText = messageImageDisplayer.general_bigger_message_display.transform.Find("title text").GetComponent<Text>();
 
-        while (!InputManager.GetButton("EfrReject"))
-            yield return null;
-        yield return messageImageDisplayer.DoTextBoldTimedOrButton("EfrReject", toggleText, 0.5f);
-        messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "one btn er message", continueText: "");
-        yield return new WaitForSeconds(1.5f);
-        messageImageDisplayer.general_bigger_message_display.SetActive(false);
+            Text toggleText = messageImageDisplayer.general_bigger_message_display.transform.Find("title text").GetComponent<Text>();
+
+            while (!InputManager.GetButton("EfrReject"))
+                yield return null;
+            yield return messageImageDisplayer.DoTextBoldTimedOrButton("EfrReject", toggleText, 0.5f);
+            messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "one btn er message", continueText: "");
+            yield return new WaitForSeconds(1.5f);
+            messageImageDisplayer.general_bigger_message_display.SetActive(false);
+        }
 
         messageImageDisplayer.SetGeneralMessageText(mainText: "er check pass");
         yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_message_display);
@@ -2682,8 +2782,12 @@ public class DeliveryExperiment : CoroutineExperiment
         yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_big_message_display);
 
         // Ask for reject button press
-        messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "one btn er message",
-                                                          continueText: "");
+        if (Config.doReject)
+        {
+            messageImageDisplayer.SetGeneralBiggerMessageText(titleText: "one btn er message",
+                                                              continueText: "");
+        }
+
         for (int i = 0; i < Config.newEfrKeypressPractices; i++)
             yield return messageImageDisplayer.DisplayMessage(
                 messageImageDisplayer.general_bigger_message_display, "EfrReject");
@@ -2963,6 +3067,27 @@ public class DeliveryExperiment : CoroutineExperiment
                 return store.GetStoreName();
         throw new UnityException("That store game object doesn't exist in the stores list.");
     }
+
+    private float CalculateDistance(Transform target)
+    {
+        NavMeshPath path = new NavMeshPath();
+        float dist = 0;
+
+        if (NavMesh.CalculatePath(target.position, player.transform.position, NavMesh.AllAreas, path))
+        {
+            for (int i = 0; i < path.corners.Length-1; i++)
+            {
+                dist += UnityEngine.Vector3.Distance(path.corners[i], path.corners[i + 1]);
+            }
+        }
+        else
+        {
+            Debug.Log("ERROR: Could not calculate path");
+        }
+
+        return dist;
+    }
+
 }
 
 public static class IListExtensions
@@ -2995,3 +3120,5 @@ public static class Extensions
             dict.Add(key, new List<T>{newValue});
     }
 }
+
+

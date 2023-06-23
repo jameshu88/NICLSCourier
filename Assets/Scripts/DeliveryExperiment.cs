@@ -19,7 +19,6 @@ using MathNet.Numerics.Distributions;
 using static MessageImageDisplayer;
 using static WorldDataReporter;
 using UnityEngine.AI;
-using static UnityEditor.PlayerSettings;
 
 [System.Serializable]
 public struct Environment

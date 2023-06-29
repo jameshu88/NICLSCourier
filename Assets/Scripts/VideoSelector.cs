@@ -20,6 +20,7 @@ public class VideoSelector : MonoBehaviour
     public UnityEngine.Video.VideoClip practiceVideo;
     public UnityEngine.Video.VideoClip ecrVideo;
     public UnityEngine.Video.VideoClip efrRecapVideo;
+    public UnityEngine.Video.VideoClip efrRecapVideoShort;
 
     public UnityEngine.Video.VideoClip townlearningVideoGerman;
     public UnityEngine.Video.VideoClip practiceVideoGerman;
@@ -107,8 +108,10 @@ public class VideoSelector : MonoBehaviour
                 case VideoType.efrRecapVideo:
                     if (LanguageSource.current_language == LanguageSource.LANGUAGE.GERMAN)
                         videoPlayer.clip = efrRecapVideoGerman;
-                    else
+                    else if (Config.doCuedRecall && Config.doReject)
                         videoPlayer.clip = efrRecapVideo;
+                    else
+                        videoPlayer.clip = efrRecapVideoShort;
                     break;
                 default: break;
             }

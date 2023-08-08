@@ -65,7 +65,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
     private const bool skipFPS = true;
     
-    private const string COURIER_VERSION = "v6.0.4";
+    private const string COURIER_VERSION = "v6.1.1";
     private const bool DEBUG = false;
 
     private const string RECALL_TEXT = "*******"; // TODO: JPB: Remove this and use display system

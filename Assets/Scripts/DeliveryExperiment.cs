@@ -65,7 +65,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
     private const bool skipFPS = true;
     
-    private const string COURIER_VERSION = "v6.1.1";
+    private const string COURIER_VERSION = "v6.2.0";
     private const bool DEBUG = false;
 
     private const string RECALL_TEXT = "*******"; // TODO: JPB: Remove this and use display system
@@ -1061,9 +1061,23 @@ public class DeliveryExperiment : CoroutineExperiment
                 if ((currpage == lastpage) && InputManager.GetButton("EfrReject"))
                 {
                     messages[currpage].SetActive(false);
-                    yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
-                                        LanguageSource.GetLanguageString("standard intro video"),
-                                        VideoSelector.VideoType.efrRecapVideo);
+
+                    if (Config.allowFullReplay) {
+                        yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
+                                             LanguageSource.GetLanguageString("standard intro video"),
+                                             VideoSelector.VideoType.townlearningVideo, canSkip: true);
+
+                        Debug.Log("Town Learning Phase");
+                        messageImageDisplayer.SetGeneralMessageText("town learning title", "town learning main 1");
+                        yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_message_display);
+                        WorldScreen();
+                        yield return DoTownLearning(0, environment.stores.Length / 2);
+
+                        yield return DoPracticeTrials(2, true);
+                    }
+                    else yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
+                                              LanguageSource.GetLanguageString("standard intro video"),
+                                              VideoSelector.VideoType.efrRecapVideo);
                     messages[currpage].SetActive(true);
                 }
                 messages[prevpage].SetActive(false);
@@ -1485,7 +1499,7 @@ public class DeliveryExperiment : CoroutineExperiment
             scriptedEventReporter.ReportScriptedEvent("stop deliveries");
     }
 
-    private IEnumerator DoPracticeTrials(int numTrials)
+    private IEnumerator DoPracticeTrials(int numTrials, bool replay=false)
     {
         Debug.Log("Practice trials");
         scriptedEventReporter.ReportScriptedEvent("start practice trials");
@@ -1504,7 +1518,7 @@ public class DeliveryExperiment : CoroutineExperiment
         {
             yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
                                  LanguageSource.GetLanguageString("standard intro video"),
-                                 VideoSelector.VideoType.practiceVideo);
+                                 VideoSelector.VideoType.practiceVideo, canSkip:replay);
             messageImageDisplayer.SetGeneralMessageText(mainText: "practice hospital");
             yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_message_display);
         }
@@ -1520,7 +1534,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 {
                     yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
                                          LanguageSource.GetLanguageString("two btn efr intro video"),
-                                         VideoSelector.VideoType.EfrIntro);
+                                         VideoSelector.VideoType.EfrIntro, canSkip: replay);
                     if (!EFR_COURIER)
                     {
                         yield return DoTwoBtnErKeypressCheck();
@@ -1532,7 +1546,7 @@ public class DeliveryExperiment : CoroutineExperiment
                     if (Config.efrEnabled)
                         yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
                                              LanguageSource.GetLanguageString("one btn efr intro video"),
-                                             VideoSelector.VideoType.efrRecapVideo);
+                                             VideoSelector.VideoType.efrRecapVideo, canSkip: replay);
                     if (!EFR_COURIER)
                     {
                         yield return DoOneBtnErKeypressCheck();

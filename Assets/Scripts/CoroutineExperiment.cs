@@ -116,7 +116,7 @@ public abstract class CoroutineExperiment : MonoBehaviour
         titleMessage.SetActive(false);
     }
 
-    protected IEnumerator DoVideo(string playPrompt, string repeatPrompt, VideoSelector.VideoType videoType, int videoIndex = -1, bool skipPrompt=false)
+    protected IEnumerator DoVideo(string playPrompt, string repeatPrompt, VideoSelector.VideoType videoType, int videoIndex = -1, bool skipPrompt=false, bool canSkip=false)
     {
         if (!skipPrompt)
             yield return PressAnyKey(playPrompt);
@@ -129,7 +129,7 @@ public abstract class CoroutineExperiment : MonoBehaviour
             SetElememState(ElememStateMsg.INSTRUCT);
             videoSelector.SetVideo(videoType, videoIndex);
             scriptedEventReporter.ReportScriptedEvent("start video", new Dictionary<string, object> { { "video number", videoIndex } });
-            videoPlayer.StartVideo();
+            videoPlayer.StartVideo(canSkip);
             while (videoPlayer.IsPlaying())
                 yield return null;
             scriptedEventReporter.ReportScriptedEvent("stop video", new Dictionary<string, object> { { "video number", videoIndex } });

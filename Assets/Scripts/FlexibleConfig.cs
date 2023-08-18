@@ -59,6 +59,7 @@ public class Config
     public static bool doReject { get { return (bool)Config.GetSetting("doReject"); } }
 
     // Game Logic
+    public static bool allowFullReplay { get { return (bool)Config.GetSetting("allowFullReplay"); } }
     public static bool efrEnabled { get { return (bool)Config.GetSetting("efrEnabled"); } }
     public static bool ecrEnabled { get { return (bool)Config.GetSetting("ecrEnabled"); } }
     public static bool twoBtnEfrEnabled { get { return (bool)Config.GetSetting("twoBtnEfrEnabled"); } }

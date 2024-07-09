@@ -54,8 +54,8 @@ public class DeliveryExperiment : CoroutineExperiment
     // TODO: JPB: Make these configuration variables
 
     // Experiment type
-    private const bool EFR_COURIER = true;
-    private const bool NICLS_COURIER = false;
+    private const bool EFR_COURIER = false;
+    private const bool NICLS_COURIER = true;
     private const bool VALUE_COURIER = false;
     #if !UNITY_WEBGL
         private const bool COURIER_ONLINE = false;
@@ -65,7 +65,7 @@ public class DeliveryExperiment : CoroutineExperiment
 
     private const bool skipFPS = true;
     
-    private const string COURIER_VERSION = "v6.1.1";
+    private const string COURIER_VERSION = "v6.2.0";
     private const bool DEBUG = false;
 
     private const string RECALL_TEXT = "*******"; // TODO: JPB: Remove this and use display system
@@ -194,8 +194,6 @@ public class DeliveryExperiment : CoroutineExperiment
 
     // Store Generation variables
     public bool[] freeTaskFirst; 
-    int freeIndex = 0;
-    int valueIndex = 0;
     int number_input;
     List<List<StoreComponent>> storeLists;  // For Value Courier
 
@@ -670,6 +668,7 @@ public class DeliveryExperiment : CoroutineExperiment
             if (!Config.noSyncbox && !Config.freiburgSyncboxOn)
             {
                 syncs = GameObject.Find("SyncBox").GetComponent<Syncbox>();
+                syncs.scriptedInput = scriptedEventReporter;
                 syncs.Init();
                 syncs.StartPulse();
             }
@@ -1061,9 +1060,23 @@ public class DeliveryExperiment : CoroutineExperiment
                 if ((currpage == lastpage) && InputManager.GetButton("EfrReject"))
                 {
                     messages[currpage].SetActive(false);
-                    yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
-                                        LanguageSource.GetLanguageString("standard intro video"),
-                                        VideoSelector.VideoType.efrRecapVideo);
+
+                    if (Config.allowFullReplay) {
+                        yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
+                                             LanguageSource.GetLanguageString("standard intro video"),
+                                             VideoSelector.VideoType.townlearningVideo, canSkip: true);
+
+                        Debug.Log("Town Learning Phase");
+                        messageImageDisplayer.SetGeneralMessageText("town learning title", "town learning main 1");
+                        yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_message_display);
+                        WorldScreen();
+                        yield return DoTownLearning(0, environment.stores.Length / 2);
+
+                        yield return DoPracticeTrials(2, true);
+                    }
+                    else yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
+                                              LanguageSource.GetLanguageString("standard intro video"),
+                                              VideoSelector.VideoType.efrRecapVideo);
                     messages[currpage].SetActive(true);
                 }
                 messages[prevpage].SetActive(false);
@@ -1485,7 +1498,7 @@ public class DeliveryExperiment : CoroutineExperiment
             scriptedEventReporter.ReportScriptedEvent("stop deliveries");
     }
 
-    private IEnumerator DoPracticeTrials(int numTrials)
+    private IEnumerator DoPracticeTrials(int numTrials, bool replay=false)
     {
         Debug.Log("Practice trials");
         scriptedEventReporter.ReportScriptedEvent("start practice trials");
@@ -1504,7 +1517,7 @@ public class DeliveryExperiment : CoroutineExperiment
         {
             yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
                                  LanguageSource.GetLanguageString("standard intro video"),
-                                 VideoSelector.VideoType.practiceVideo);
+                                 VideoSelector.VideoType.practiceVideo, canSkip:replay);
             messageImageDisplayer.SetGeneralMessageText(mainText: "practice hospital");
             yield return messageImageDisplayer.DisplayMessage(messageImageDisplayer.general_message_display);
         }
@@ -1520,7 +1533,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 {
                     yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
                                          LanguageSource.GetLanguageString("two btn efr intro video"),
-                                         VideoSelector.VideoType.EfrIntro);
+                                         VideoSelector.VideoType.EfrIntro, canSkip: replay);
                     if (!EFR_COURIER)
                     {
                         yield return DoTwoBtnErKeypressCheck();
@@ -1532,7 +1545,7 @@ public class DeliveryExperiment : CoroutineExperiment
                     if (Config.efrEnabled)
                         yield return DoVideo(LanguageSource.GetLanguageString("play movie"),
                                              LanguageSource.GetLanguageString("one btn efr intro video"),
-                                             VideoSelector.VideoType.efrRecapVideo);
+                                             VideoSelector.VideoType.efrRecapVideo, canSkip: replay);
                     if (!EFR_COURIER)
                     {
                         yield return DoOneBtnErKeypressCheck();
@@ -1639,6 +1652,9 @@ public class DeliveryExperiment : CoroutineExperiment
         freeList.Shuffle(new System.Random());
         valueList.Shuffle(new System.Random());
 
+        int freeIndex = 0;
+        int valueIndex = 0;
+
         for (int trialNumber = 0; trialNumber < numTrials; trialNumber++)
         {
             starSystem.ResetSession();
@@ -1696,9 +1712,13 @@ public class DeliveryExperiment : CoroutineExperiment
                     elememInterface.SendTrialMessage(continuousTrialNum, useElemem ? true : false);
                     // elememInterface.SendStimSelectMessage(stimTagLists[trialNumber]);
                 }
-            #endif
+#endif
 
             // LC: order of which the task appears is evenly randomized (3 free / 3 value)
+            Debug.Log(freeIndex);
+            Debug.Log(valueIndex);
+
+
             if (freeTaskFirst[trialNumber])
             {
                 // LC: for each case, all 3 conditions should appear (serial, spatial, random)

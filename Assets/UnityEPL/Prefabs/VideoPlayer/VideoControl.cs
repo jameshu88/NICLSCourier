@@ -8,6 +8,7 @@ public class VideoControl : MonoBehaviour
 {
     public UnityEngine.Video.VideoPlayer videoPlayer;
     public bool deactivateWhenFinished = true;
+    public bool canSkip = false;
 
     void Update()
     {
@@ -29,8 +30,14 @@ public class VideoControl : MonoBehaviour
                 gameObject.SetActive(false);
             }
 
-            // Video finished
-            if (videoPlayer.time >= videoPlayer.clip.length)
+            if (InputManager.GetButtonDown("Continue") && canSkip)
+            {
+                videoPlayer.Stop();
+                gameObject.SetActive(false);
+            }
+
+        // Video finished
+        if (videoPlayer.time >= videoPlayer.clip.length)
             {
                 Debug.Log("VideoControl end video");
                 gameObject.SetActive(false);
@@ -39,8 +46,10 @@ public class VideoControl : MonoBehaviour
     }
 
 
-    public void StartVideo()
+    public void StartVideo(bool replay)
     {
+        canSkip = replay;
+
         Debug.Log("VideoControl start video");
         videoPlayer.loopPointReached += (VideoPlayer vp) => gameObject.SetActive(false);
         gameObject.SetActive(true);

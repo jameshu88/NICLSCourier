@@ -54,8 +54,8 @@ public class DeliveryExperiment : CoroutineExperiment
     // TODO: JPB: Make these configuration variables
 
     // Experiment type
-    private const bool EFR_COURIER = true;
-    private const bool NICLS_COURIER = false;
+    private const bool EFR_COURIER = false;
+    private const bool NICLS_COURIER = true;
     private const bool VALUE_COURIER = false;
     #if !UNITY_WEBGL
         private const bool COURIER_ONLINE = false;
@@ -194,8 +194,6 @@ public class DeliveryExperiment : CoroutineExperiment
 
     // Store Generation variables
     public bool[] freeTaskFirst; 
-    int freeIndex = 0;
-    int valueIndex = 0;
     int number_input;
     List<List<StoreComponent>> storeLists;  // For Value Courier
 
@@ -670,6 +668,7 @@ public class DeliveryExperiment : CoroutineExperiment
             if (!Config.noSyncbox && !Config.freiburgSyncboxOn)
             {
                 syncs = GameObject.Find("SyncBox").GetComponent<Syncbox>();
+                syncs.scriptedInput = scriptedEventReporter;
                 syncs.Init();
                 syncs.StartPulse();
             }
@@ -1653,6 +1652,9 @@ public class DeliveryExperiment : CoroutineExperiment
         freeList.Shuffle(new System.Random());
         valueList.Shuffle(new System.Random());
 
+        int freeIndex = 0;
+        int valueIndex = 0;
+
         for (int trialNumber = 0; trialNumber < numTrials; trialNumber++)
         {
             starSystem.ResetSession();
@@ -1710,9 +1712,13 @@ public class DeliveryExperiment : CoroutineExperiment
                     elememInterface.SendTrialMessage(continuousTrialNum, useElemem ? true : false);
                     // elememInterface.SendStimSelectMessage(stimTagLists[trialNumber]);
                 }
-            #endif
+#endif
 
             // LC: order of which the task appears is evenly randomized (3 free / 3 value)
+            Debug.Log(freeIndex);
+            Debug.Log(valueIndex);
+
+
             if (freeTaskFirst[trialNumber])
             {
                 // LC: for each case, all 3 conditions should appear (serial, spatial, random)

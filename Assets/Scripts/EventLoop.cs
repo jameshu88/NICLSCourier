@@ -3,7 +3,7 @@ using System.Threading;
 using System.Collections.Concurrent;
 
 public class EventLoop : EventQueue {
-    private ManualResetEventSlim wait;
+    protected ManualResetEventSlim wait;
 
     ~EventLoop() {
         StopLoop();

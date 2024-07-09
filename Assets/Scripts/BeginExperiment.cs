@@ -20,8 +20,8 @@ public class BeginExperiment : MonoBehaviour
     public UnityEngine.UI.Toggle useElememToggle;
 
     // TODO: JPB: Make these configuration variables
-    private const bool EFR_COURIER = true;
-    private const bool NICLS_COURIER = false;
+    private const bool EFR_COURIER = false;
+    private const bool NICLS_COURIER = true;
     private const bool VALUE_COURIER = false;
 
     private const string scene_name = "MainGame";

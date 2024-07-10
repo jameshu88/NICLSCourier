@@ -14,18 +14,6 @@ using System.Collections.Concurrent;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
-public struct NetMsg
-{
-    public string msg;
-    public DateTime time;
-
-    public NetMsg(string msg, DateTime time)
-    {
-        this.msg = msg;
-        this.time = time;
-    }
-}
-
 public class UPennSyncbox : EventLoop {
 //Function from Corey's Syncbox plugin (called "ASimplePlugin")
 	//[DllImport ("ASimplePlugin")]

@@ -3162,7 +3162,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scriptedInput: {fileID: 0}
-  isInit: 0
 --- !u!114 &794717486
 MonoBehaviour:
   m_ObjectHideFlags: 0

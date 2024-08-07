@@ -74,12 +74,18 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
-# Textures which are too big for github
+# Textures/Assets which are too big for github
 Assets/Town Constructor 3/Textures
 Assets/Town Constructor 3
 Assets/Video/Music Videos
 Assets/Video/Sherlock_*
 # Assets/Video/German Videos
+
+Assets/Models/Object FBX 2
+Assets/Models/Object Prefabs
+Assets/Models/Object Prefabs 2
+
+
 
 # Streaming Assets
 Assets/StreamingAssets/CourierOnline.json

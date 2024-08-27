@@ -11,9 +11,9 @@ public class Spin : MonoBehaviour {
 
     void Start() {
         //moving the object up and down
-        StartCoroutine(moveUpAndDown());
+        //StartCoroutine(moveUpAndDown());
 
-        StartCoroutine(Disappear());
+        //StartCoroutine(Disappear());
     }
 
     public void moveUp() {

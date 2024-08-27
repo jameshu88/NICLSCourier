@@ -216,7 +216,7 @@ public class DeliveryExperiment : CoroutineExperiment
     ModelList modelList;
 
     [SerializeField] private int minInterval = 20;
-    [SerializeField] private int maxInterval = 80;
+    [SerializeField] private int maxInterval = 60;
     [SerializeField] private int recalculationDistance = 5;
     private GameObject currentObject;
 
@@ -1427,7 +1427,21 @@ public class DeliveryExperiment : CoroutineExperiment
                     canSpawnAgain = false;
                 }
             }
-            if(spawnedItem != null)
+
+            // storing delivered items and stores
+#if !UNITY_WEBGL // System.IO
+            if (audioPlayback.clip != null)
+            {
+                string lstFilepath = practice
+                            ? System.IO.Path.Combine(UnityEPL.GetDataPath(), "practice-" + continuousTrialNum.ToString() + ".lst")
+                            : System.IO.Path.Combine(UnityEPL.GetDataPath(), continuousTrialNum.ToString() + ".lst");
+                AppendWordToLst(lstFilepath, "(" + audioPlayback.clip.name + ", " + nextStore.GetStoreName() + ")");
+#endif
+                allPresentedObjects.Add("(" + audioPlayback.clip.name + ", " + nextStore.GetStoreName() + ")");
+            }
+
+
+            if (spawnedItem != null)
             {
                 Destroy(spawnedItem);
             }
@@ -1508,13 +1522,7 @@ public class DeliveryExperiment : CoroutineExperiment
                                                                             {"stim condition", useElemem ? isStimStore : false},
                                                                             {"stim tag", stimTag} };
 
-                #if !UNITY_WEBGL // System.IO
-                    string lstFilepath = practice
-                                ? System.IO.Path.Combine(UnityEPL.GetDataPath(), "practice-" + continuousTrialNum.ToString() + ".lst")
-                                : System.IO.Path.Combine(UnityEPL.GetDataPath(), continuousTrialNum.ToString() + ".lst");
-                    AppendWordToLst(lstFilepath, deliveredItemName);
-                #endif
-                allPresentedObjects.Add(deliveredItemName);
+                
 
                 audioPlayback.clip = deliveredItem;
                 //audioPlayback.Play();
@@ -1532,7 +1540,7 @@ public class DeliveryExperiment : CoroutineExperiment
                 
                 foreach (var modelObject in modelList.models) {
                     //get position of circle
-                    if (modelObject.name == deliveredItemName) {
+                    if (modelObject.name.ToLower() == deliveredItemName.ToLower()) {
                         currentObject = modelObject;
                         //set position of prefab to circle position
                         //var circlePosition = lastStoreToVisit.getCirclePosition();

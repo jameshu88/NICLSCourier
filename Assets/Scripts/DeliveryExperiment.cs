@@ -215,10 +215,14 @@ public class DeliveryExperiment : CoroutineExperiment
 
     ModelList modelList;
 
-    [SerializeField] private int minInterval = 20;
-    [SerializeField] private int maxInterval = 60;
+    [SerializeField] private float minInterval = 20;
+    [SerializeField] private float maxInterval = 60;
     [SerializeField] private int recalculationDistance = 5;
     private GameObject currentObject;
+
+    private int continuousTrialNumber;
+    private List<GameObject> spawnedItemList = new List<GameObject>();
+    public static Action OnObjectDelivered;
 
     // Stim Tags
     List<string> GenerateStimTags(int numTrials)
@@ -696,11 +700,13 @@ public class DeliveryExperiment : CoroutineExperiment
     private void OnEnable()
     {
         ShowObjectOnProximity.OnPlayObjectSound += PlayCurrentObjectSound;
+        ShowObjectOnProximity.OnPreviousItemLocation += AtPreviousItemLocation;
     }
 
     private void OnDisable()
     {
         ShowObjectOnProximity.OnPlayObjectSound -= PlayCurrentObjectSound;
+        ShowObjectOnProximity.OnPreviousItemLocation -= AtPreviousItemLocation;
     }
 
     private IEnumerator ExperimentCoroutine()
@@ -1214,7 +1220,9 @@ public class DeliveryExperiment : CoroutineExperiment
     private IEnumerator DoDeliveries(int trialNumber, int continuousTrialNum, bool practice = false, bool skipLastDelivStores = false, 
                                      StorePointType storePointType = StorePointType.Random, bool freeFirst = true, string stimTag = null)
     {
+        continuousTrialNumber = continuousTrialNum;
         bool canSpawnAgain = false;
+        ClearSpawnedItems();
         Dictionary<string, object> trialData = new Dictionary<string, object>();
         trialData.Add("trial number", continuousTrialNum);
         if (practice)
@@ -1376,9 +1384,12 @@ public class DeliveryExperiment : CoroutineExperiment
             float cumDist = 0f;
             float distanceTravelled = 0f;
             float dist = CalculateDistance(nextStore.transform.Find("DeliveryZone"));
-            int minSpawnDistance = (int)(dist / 100 * minInterval);
-            int maxSpawnDistance = (int)(dist / 100 * maxInterval);
-            int randomDistance = UnityEngine.Random.Range(minSpawnDistance, maxSpawnDistance);
+            minInterval = 0.3f * Mathf.Exp(-dist) + 0.2f;
+            maxInterval = 0.3f * (1 - Mathf.Exp(-dist)) + 0.5f;
+            float minSpawnDistance = dist * minInterval;
+            float maxSpawnDistance = dist * maxInterval;
+            float randomDistance = UnityEngine.Random.Range(minSpawnDistance, maxSpawnDistance);
+            float pr = randomDistance / dist;
             bool distTriggerActivated = false;
             bool timeTriggerActivated = false;
             GameObject spawnedItem = null;
@@ -1388,8 +1399,15 @@ public class DeliveryExperiment : CoroutineExperiment
                 yield return null;
 
                 float newDist = CalculateDistance(nextStore.transform.Find("DeliveryZone"));
-                if (newDist > dist) cumDist += newDist - dist;
-                distanceTravelled += Mathf.Abs(newDist - dist);
+                if (newDist > dist)
+                {
+                    cumDist += newDist - dist;
+                }
+                else
+                {
+                    distanceTravelled += Mathf.Abs(newDist - dist);
+                }
+                
                 dist = newDist;
 
                 if ((int)distanceTravelled % recalculationDistance == 0)
@@ -1399,11 +1417,18 @@ public class DeliveryExperiment : CoroutineExperiment
                     {
                         Destroy(spawnedItem);
                         dist = CalculateDistance(nextStore.transform.Find("DeliveryZone"));
-                        minSpawnDistance = (int)(dist / 100 * minInterval);
-                        maxSpawnDistance = (int)(dist / 100 * maxInterval);
+                        minInterval = 0.3f * Mathf.Exp(-dist) + 0.2f;
+                        maxInterval = 0.3f * (1 - Mathf.Exp(-dist)) + 0.5f;
+                        minSpawnDistance = dist * minInterval;
+                        maxSpawnDistance = dist * maxInterval;
                         randomDistance = UnityEngine.Random.Range(minSpawnDistance, maxSpawnDistance);
+                        pr = randomDistance / dist;
                         canSpawnAgain = true;
                         hasSpawnedForLongerDist = true;
+                        //if ((int)distanceTravelled == dist * pr && (distanceTravelled >= 1))
+                        //{
+
+                        //}
                     }
                 }
                 else
@@ -1424,7 +1449,9 @@ public class DeliveryExperiment : CoroutineExperiment
                     Vector3 pointAhead = GetPointAheadOnPath(player.transform.position, randomDistance);
                     float heightOffset = currentObject.GetComponent<ShowObjectOnProximity>().GetHeightOffset();
                     spawnedItem = Instantiate(currentObject, pointAhead + Vector3.up * heightOffset, Quaternion.identity);
+                    spawnedItem.transform.GetChild(0).transform.localPosition = new Vector3(0, heightOffset, 0);
                     canSpawnAgain = false;
+                    Debug.Log("test Obj spawned");
                 }
             }
 
@@ -1443,7 +1470,11 @@ public class DeliveryExperiment : CoroutineExperiment
 
             if (spawnedItem != null)
             {
-                Destroy(spawnedItem);
+                // marking object as previously delivered object but not removing it
+                spawnedItem.GetComponent<ShowObjectOnProximity>().DisableObj();
+                spawnedItemList.Add(spawnedItem);
+                StartCoroutine(CompleteObjectDelivery());
+                //Destroy(spawnedItem);
             }
             yield return DisplayPointingIndicator(nextStore, false);
 
@@ -3256,6 +3287,38 @@ public class DeliveryExperiment : CoroutineExperiment
         audioPlayback.Play();
     }
 
+    private void AtPreviousItemLocation(string itemName)
+    {
+        // adding the previous item's name to the file
+        itemName = itemName.Replace("(Clone)", "").Trim();
+        string txtFilepath = System.IO.Path.Combine(UnityEPL.GetDataPath(), continuousTrialNumber.ToString() + ".txt");
+        AppendWordToLst(txtFilepath, audioPlayback.clip.name +  ": (" + itemName + ", " + GetFormattedTimestamp() + ")");
+        Debug.Log(audioPlayback.clip.name + ": (" + itemName + ", " + GetFormattedTimestamp() + ")");
+    }
+
+    private string GetFormattedTimestamp()
+    {
+        return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+    }
+
+    private void ClearSpawnedItems()
+    {
+        foreach (GameObject item in spawnedItemList)
+        {
+            if (item != null) 
+            {
+                Destroy(item);
+            }
+        }
+        spawnedItemList.Clear();
+    }
+
+    private IEnumerator CompleteObjectDelivery()
+    {
+        // a delay is needed to ensure that the next item to deliver is available
+        yield return new WaitForSeconds(1.5f);
+        OnObjectDelivered?.Invoke();
+    }
 }
 
 public static class IListExtensions
@@ -3288,5 +3351,4 @@ public static class Extensions
             dict.Add(key, new List<T>{newValue});
     }
 }
-
 
